@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PrestaYa</title>
 <meta name="description" content="Gira la ruleta y gana boletas extra">
-<meta name="theme-color" content="#7f0d0d">
+<meta name="theme-color" content="#023852">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,7 +16,7 @@
 /* ============================================================
    ICONO SVG + MANIFEST EMBEBIDO (Data URI)
    ============================================================ */
-const APP_VERSION = '1.4';
+const APP_VERSION = '1.5';
 const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
 
 function makeIconSVG(){
@@ -28,7 +28,7 @@ function makeIconSVG(){
     const x1 = cx + r * Math.cos(a1), y1 = cx + r * Math.sin(a1);
     paths += `<path d="M${cx},${cx} L${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${WHEEL_COLORS[i]}" stroke="#fff" stroke-width="3"/>`;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#1a0b3d"/><circle cx="256" cy="256" r="240" fill="#B71C1C"/>${paths}<circle cx="256" cy="256" r="58" fill="#9e9e9e"/><circle cx="256" cy="256" r="48" fill="#fff"/><circle cx="256" cy="256" r="38" fill="#fff" stroke="#bdbdbd" stroke-width="4"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#023852"/><circle cx="256" cy="256" r="240" fill="#B71C1C"/>${paths}<circle cx="256" cy="256" r="58" fill="#9e9e9e"/><circle cx="256" cy="256" r="48" fill="#fff"/><circle cx="256" cy="256" r="38" fill="#fff" stroke="#bdbdbd" stroke-width="4"/></svg>`;
 }
 
 (function setupManifest(){
@@ -49,8 +49,8 @@ function makeIconSVG(){
     scope: base,
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#1a0b3d',
-    theme_color: '#7f0d0d',
+    background_color: '#023852',
+    theme_color: '#023852',
     lang: 'es',
     icons: [
       { src: base + 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
@@ -72,16 +72,19 @@ function makeIconSVG(){
 
 <style>
   :root{
-    --crimson:#b71c1c; --crimson-dark:#7f0d0d; --gold:#ffc83d;
-    --bg1:#2a0f5c; --bg2:#12052e;
+    /* Paleta PrestaYa */
+    --navy:#023852; --teal:#079fa0; --mint:#9fd8c5; --yellow:#fac005; --red:#dc2e2f;
+    --crimson:var(--red); --gold:var(--yellow);
+    --bg1:#045278; --bg2:#011f2e;
   }
   *{ -webkit-tap-highlight-color: transparent; }
+  .hidden{ display:none !important; }   /* respaldo si el CDN de Tailwind no carga */
   html,body{ background:var(--bg2); }
   body{
     font-family:'Baloo 2', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height:100vh; min-height:100dvh;
     background:
-      radial-gradient(ellipse at 50% 35%, rgba(255,200,61,.18), transparent 55%),
+      radial-gradient(ellipse at 50% 35%, rgba(7,159,160,.30), transparent 60%),
       repeating-conic-gradient(from 0deg at 50% 38%, rgba(255,255,255,.035) 0 10deg, transparent 10deg 20deg),
       linear-gradient(180deg, var(--bg1), var(--bg2));
     background-attachment: fixed;
@@ -89,14 +92,14 @@ function makeIconSVG(){
   }
   .title{
     font-weight:800; letter-spacing:.5px; line-height:1;
-    background:linear-gradient(180deg,#fff6c9,#ffc83d 55%,#ff9d00);
+    background:linear-gradient(180deg,#fff2b8,#fac005 60%,#e0a800);
     -webkit-background-clip:text; background-clip:text; color:transparent;
     filter:drop-shadow(0 2px 0 rgba(0,0,0,.35));
   }
-  .chip{ background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); border-radius:999px; }
+  .chip{ background:rgba(7,159,160,.25); border:1px solid rgba(159,216,197,.55); border-radius:999px; }
   .icon-btn{
     width:42px; height:42px; border-radius:14px; display:grid; place-items:center;
-    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+    background:rgba(7,159,160,.22); border:1px solid rgba(159,216,197,.45);
   }
   .icon-btn:active{ transform:scale(.94); }
 
@@ -104,7 +107,7 @@ function makeIconSVG(){
   #wheelWrap{ width:min(84vw, 400px); aspect-ratio:1/1; position:relative; }
   #wheelGlow{
     position:absolute; inset:-6%; border-radius:50%;
-    background:radial-gradient(circle, rgba(255,200,61,.35), transparent 65%);
+    background:radial-gradient(circle, rgba(159,216,197,.35), transparent 65%);
     filter:blur(6px); pointer-events:none;
   }
   #wheel{
@@ -127,7 +130,7 @@ function makeIconSVG(){
     background:radial-gradient(circle at 35% 30%, #ffffff, #f1f1f1 60%, #d9d9d9);
     border:2px solid #9e9e9e;
     box-shadow:0 0 0 3px #fff, 0 0 0 6px #8a8a8a, 0 0 0 7px #c7c7c7, 0 5px 12px rgba(0,0,0,.45);
-    color:var(--crimson); font-weight:800; font-size:clamp(10px,2.9vw,14px); letter-spacing:.3px;
+    color:#b71c1c; font-weight:800; font-size:clamp(10px,2.9vw,14px); letter-spacing:.3px;
     transition:transform .15s;
   }
   #hubBtn:not(:disabled):active{ transform:translate(-50%,-50%) scale(.93); }
@@ -136,11 +139,11 @@ function makeIconSVG(){
   .spin-btn{
     font-weight:800; font-size:1.25rem; letter-spacing:.5px; color:#fff;
     padding:.85rem 2.2rem; border-radius:999px;
-    background:linear-gradient(180deg,#ff5252,#c62828 55%,#8e0000);
-    box-shadow:0 6px 0 #5c0000, 0 12px 24px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.35);
+    background:linear-gradient(180deg,#ef5354,#dc2e2f 55%,#a81f20);
+    box-shadow:0 6px 0 #6e1314, 0 12px 24px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.35);
     transition:transform .1s, box-shadow .1s, filter .2s;
   }
-  .spin-btn:not(:disabled):active{ transform:translateY(5px); box-shadow:0 1px 0 #5c0000, 0 6px 12px rgba(0,0,0,.4); }
+  .spin-btn:not(:disabled):active{ transform:translateY(5px); box-shadow:0 1px 0 #6e1314, 0 6px 12px rgba(0,0,0,.4); }
   .spin-btn:disabled{ filter:grayscale(.85) brightness(.75); }
   .pulse:not(:disabled){ animation:pulse 1.8s ease-in-out infinite; }
   @keyframes pulse{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.05) } }
@@ -148,72 +151,72 @@ function makeIconSVG(){
   /* ---------- Modales ---------- */
   .modal{
     position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
-    padding:20px; background:rgba(8,2,22,.72); backdrop-filter:blur(4px);
+    padding:20px; background:rgba(1,31,46,.75); backdrop-filter:blur(4px);
     opacity:0; pointer-events:none; transition:opacity .25s;
   }
   .modal.open{ opacity:1; pointer-events:auto; }
   .modal-card{
     width:100%; max-width:380px; border-radius:26px; padding:26px 22px 20px; text-align:center;
-    background:linear-gradient(180deg,#ffffff,#fff7e6); color:#2b1b4a;
+    background:linear-gradient(180deg,#ffffff,#e8f6f1); color:var(--navy);
     border:4px solid var(--gold);
-    box-shadow:0 0 0 6px var(--crimson), 0 24px 60px rgba(0,0,0,.6);
+    box-shadow:0 0 0 6px var(--teal), 0 24px 60px rgba(0,0,0,.6);
     transform:scale(.85) translateY(20px); transition:transform .35s cubic-bezier(.2,1.4,.4,1);
   }
   .modal.open .modal-card{ transform:scale(1) translateY(0); }
   .prize-box{
     margin:14px 0 8px; padding:14px 12px; border-radius:18px;
-    background:linear-gradient(180deg,#b71c1c,#7f0d0d); color:#fff;
+    background:linear-gradient(180deg,#e5494a,#dc2e2f 50%,#b02223); color:#fff;
     font-weight:800; font-size:1.6rem; line-height:1.1;
-    box-shadow:inset 0 2px 0 rgba(255,255,255,.25), 0 6px 14px rgba(127,13,13,.35);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.25), 0 6px 14px rgba(220,46,47,.35);
   }
-  .prize-box.soft{ background:linear-gradient(180deg,#5e35b1,#3a1f7a); font-size:1.3rem; }
+  .prize-box.soft{ background:linear-gradient(180deg,#079fa0,#035f70); font-size:1.3rem; }
   .btn{ border-radius:14px; padding:.75rem 1rem; font-weight:700; width:100%; transition:transform .1s; }
   .btn:active{ transform:scale(.97); }
-  .btn-wa{ background:#25D366; color:#fff; }
-  .btn-dark{ background:#2b1b4a; color:#fff; }
-  .btn-ghost{ background:#efe9f8; color:#2b1b4a; }
+  .btn-wa{ background:var(--teal); color:#fff; }
+  .btn-dark{ background:var(--navy); color:#fff; }
+  .btn-ghost{ background:#dff3ec; color:var(--navy); }
   .btn-red{ background:var(--crimson); color:#fff; }
 
   /* ---------- Panel admin ---------- */
   .sheet{
-    position:fixed; inset:0; z-index:45; background:#f6f3fb; color:#22163d;
+    position:fixed; inset:0; z-index:45; background:#eef8f4; color:var(--navy);
     transform:translateY(100%); transition:transform .35s cubic-bezier(.2,.9,.3,1);
     overflow-y:auto; -webkit-overflow-scrolling:touch;
   }
   .sheet.open{ transform:translateY(0); }
-  .card{ background:#fff; border-radius:20px; padding:16px; box-shadow:0 2px 10px rgba(40,20,80,.08); }
-  .field{ width:100%; border:2px solid #e3dcf0; border-radius:12px; padding:.65rem .8rem; font-size:1rem; background:#fff; color:#22163d; }
-  .field:focus{ outline:none; border-color:#7e57c2; }
-  .label{ font-size:.8rem; font-weight:700; color:#6b5b8a; margin-bottom:4px; display:block; }
+  .card{ background:#fff; border-radius:20px; padding:16px; box-shadow:0 2px 10px rgba(2,56,82,.08); }
+  .field{ width:100%; border:2px solid #bfe5d8; border-radius:12px; padding:.65rem .8rem; font-size:1rem; background:#fff; color:var(--navy); }
+  .field:focus{ outline:none; border-color:var(--teal); }
+  .label{ font-size:.8rem; font-weight:700; color:#3e6f82; margin-bottom:4px; display:block; }
 
   .notice{
     border-radius:20px; padding:16px; text-align:center;
-    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25);
+    background:rgba(2,56,82,.55); border:1px solid rgba(159,216,197,.5);
   }
   #toast{
     position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
-    background:#22163d; color:#fff; padding:.6rem 1rem; border-radius:12px; font-weight:600;
+    background:var(--navy); color:#fff; padding:.6rem 1rem; border-radius:12px; font-weight:600;
     opacity:0; transition:all .25s; z-index:70; pointer-events:none; max-width:90vw; text-align:center;
   }
   #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .acc{
-    border-radius:22px; padding:16px; background:linear-gradient(180deg,rgba(127,13,13,.55),rgba(42,15,92,.6));
+    border-radius:22px; padding:16px; background:linear-gradient(180deg,rgba(7,159,160,.35),rgba(2,56,82,.85));
     border:2px solid var(--gold); box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.15);
   }
-  .acc-total{ background:var(--gold); color:#5c0000; font-weight:800; border-radius:999px; padding:.15rem .8rem; font-size:1rem; white-space:nowrap; }
+  .acc-total{ background:var(--gold); color:var(--navy); font-weight:800; border-radius:999px; padding:.15rem .8rem; font-size:1rem; white-space:nowrap; }
   .acc-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:.55rem .8rem; border-radius:14px; background:rgba(255,255,255,.08); font-weight:700; }
-  .acc-row.win{ background:rgba(255,200,61,.18); border:1px solid rgba(255,200,61,.6); color:#fff3b0; }
+  .acc-row.win{ background:rgba(250,192,5,.18); border:1px solid rgba(250,192,5,.7); color:#ffe58a; }
   .acc-row.pending{ opacity:.55; font-weight:600; }
   .send-box{
     border-radius:22px; padding:18px 16px; text-align:center;
-    background:linear-gradient(180deg,rgba(37,211,102,.25),rgba(18,5,46,.6));
-    border:2px solid #25D366; box-shadow:0 10px 26px rgba(0,0,0,.35);
+    background:linear-gradient(180deg,rgba(159,216,197,.35),rgba(2,56,82,.85));
+    border:2px solid var(--mint); box-shadow:0 10px 26px rgba(0,0,0,.35);
     animation:popIn .45s cubic-bezier(.2,1.4,.4,1);
   }
   @keyframes popIn{ from{ transform:scale(.85); opacity:0 } to{ transform:scale(1); opacity:1 } }
-  .switch{ position:relative; width:52px; height:30px; flex:none; border-radius:999px; background:#cfc6e0; transition:background .2s; }
+  .switch{ position:relative; width:52px; height:30px; flex:none; border-radius:999px; background:#bcd9cf; transition:background .2s; }
   .switch::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.25); transition:transform .2s; }
-  #infToggle:checked + .switch{ background:#25D366; }
+  #infToggle:checked + .switch{ background:var(--teal); }
   #infToggle:checked + .switch::after{ transform:translateX(22px); }
   #confetti{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; }
 </style>
@@ -295,12 +298,12 @@ function makeIconSVG(){
 <div id="resultModal" class="modal" role="dialog" aria-modal="true">
   <div class="modal-card">
     <div id="resIcon" class="text-6xl leading-none">🎉</div>
-    <h2 id="resTitle" class="text-3xl font-extrabold mt-2" style="color:#b71c1c"></h2>
-    <p id="resSub" class="text-base text-[#5a4a78] mt-1"></p>
+    <h2 id="resTitle" class="text-3xl font-extrabold mt-2" style="color:#dc2e2f"></h2>
+    <p id="resSub" class="text-base text-[#2c5d73] mt-1"></p>
     <div id="resPrize" class="prize-box"></div>
-    <p id="resMeta" class="text-xs text-[#7a6b96]"></p>
-    <p id="resCode" class="text-xs text-[#7a6b96] mt-1"></p>
-    <p id="resLeft" class="text-base font-bold mt-3" style="color:#5e35b1"></p>
+    <p id="resMeta" class="text-xs text-[#4b7a8c]"></p>
+    <p id="resCode" class="text-xs text-[#4b7a8c] mt-1"></p>
+    <p id="resLeft" class="text-base font-bold mt-3" style="color:#079fa0"></p>
     <div class="mt-4 flex flex-col gap-2">
       <button id="resClaim" class="btn btn-wa hidden">Enviar resultados por WhatsApp</button>
       <button id="resClose" class="btn btn-dark">Cerrar</button>
@@ -319,7 +322,7 @@ function makeIconSVG(){
     <!-- PIN -->
     <div id="pinView" class="card text-center">
       <p class="font-bold text-lg">Ingresa tu PIN</p>
-      <p class="text-sm text-[#6b5b8a] mb-3">PIN inicial: 1234 (cámbialo en Ajustes)</p>
+      <p class="text-sm text-[#3e6f82] mb-3">PIN inicial: 1234 (cámbialo en Ajustes)</p>
       <input id="pinInput" type="password" inputmode="numeric" maxlength="8" class="field text-center text-2xl tracking-[.4em]" placeholder="••••">
       <button id="pinOk" class="btn btn-red mt-3">Entrar</button>
     </div>
@@ -355,7 +358,7 @@ function makeIconSVG(){
       <div class="card">
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-extrabold text-lg">Enlaces generados</h3>
-          <span id="histCount" class="text-sm text-[#6b5b8a]"></span>
+          <span id="histCount" class="text-sm text-[#3e6f82]"></span>
         </div>
         <input id="histSearch" class="field mb-3" placeholder="Buscar por nombre o ID">
         <div id="histList" class="flex flex-col gap-2"></div>
@@ -363,7 +366,7 @@ function makeIconSVG(){
 
       <div class="card">
         <h3 class="font-extrabold text-lg mb-1">Verificar premio</h3>
-        <p class="text-sm text-[#6b5b8a] mb-3">Cuando un cliente reclame, pide su ID y el código de verificación que le mostró su cajón de premios.</p>
+        <p class="text-sm text-[#3e6f82] mb-3">Cuando un cliente reclame, pide su ID y el código de verificación que le mostró su cajón de premios.</p>
         <div class="grid grid-cols-2 gap-2">
           <input id="vId" class="field" placeholder="ID">
           <input id="vCode" class="field uppercase" placeholder="Código">
@@ -379,16 +382,16 @@ function makeIconSVG(){
           <input id="newPin" type="password" inputmode="numeric" maxlength="8" class="field" placeholder="4 a 8 dígitos">
           <button id="savePin" class="btn btn-dark !w-auto px-4">Guardar</button>
         </div>
-        <label class="flex items-center justify-between gap-3 mt-4 p-3 rounded-xl bg-[#f3eefb] cursor-pointer">
+        <label class="flex items-center justify-between gap-3 mt-4 p-3 rounded-xl bg-[#dff3ec] cursor-pointer">
           <span>
             <span class="block font-bold">♾️ Giros de prueba infinitos</span>
-            <span class="block text-xs text-[#6b5b8a]">Solo en la vista sin enlace de este dispositivo. Los enlaces de clientes siguen con 2 giros.</span>
+            <span class="block text-xs text-[#3e6f82]">Solo en la vista sin enlace de este dispositivo. Los enlaces de clientes siguen con 2 giros.</span>
           </span>
           <input id="infToggle" type="checkbox" class="sr-only">
           <span class="switch" aria-hidden="true"></span>
         </label>
         <button id="resetDevice" class="btn btn-ghost mt-3">Borrar giros registrados en este dispositivo</button>
-        <p class="text-xs text-[#6b5b8a] mt-3">Versión <span class="appVersion"></span></p>
+        <p class="text-xs text-[#3e6f82] mt-3">Versión <span class="appVersion"></span></p>
       </div>
     </div>
   </div>
@@ -813,7 +816,7 @@ let parts = [], confRAF = null;
 function sizeConfetti(){ const d = Math.min(devicePixelRatio || 1, 2); cv.width = innerWidth * d; cv.height = innerHeight * d; cc.setTransform(d, 0, 0, d, 0, 0); }
 function launchConfetti(){
   sizeConfetti();
-  const cols = ['#ff1744','#ffc400','#00e676','#2979ff','#d500f9','#ff9100','#ffffff','#18ffff'];
+  const cols = ['#023852','#079fa0','#9fd8c5','#fac005','#dc2e2f','#ffffff'];
   const W = innerWidth, H = innerHeight;
   const burst = (x, y, n, angle, spread, speed) => {
     for (let i = 0; i < n; i++) {
@@ -910,19 +913,19 @@ function renderHistory(){
   const list = all.filter(h => !q || h.cliente.toLowerCase().includes(q) || h.id.toLowerCase().includes(q));
   $('histCount').textContent = `${all.length} en total`;
   const box = $('histList'); box.innerHTML = '';
-  if (!list.length) { box.innerHTML = '<p class="text-sm text-center text-[#8a7aa8] py-3">Aún no hay enlaces</p>'; return; }
+  if (!list.length) { box.innerHTML = '<p class="text-sm text-center text-[#5f8f9f] py-3">Aún no hay enlaces</p>'; return; }
   list.slice(0, 60).forEach(h => {
     const row = document.createElement('div');
-    row.className = 'flex items-center gap-2 border border-[#ece6f6] rounded-xl p-2';
+    row.className = 'flex items-center gap-2 border border-[#cfe9e0] rounded-xl p-2';
     const info = document.createElement('div'); info.className = 'flex-1 min-w-0';
     const n = document.createElement('p'); n.className = 'font-bold truncate'; n.textContent = h.cliente;
-    const d = document.createElement('p'); d.className = 'text-xs text-[#7a6b96]'; d.textContent = `ID ${h.id} · ${fmtDate(h.fecha)}`;
+    const d = document.createElement('p'); d.className = 'text-xs text-[#4b7a8c]'; d.textContent = `ID ${h.id} · ${fmtDate(h.fecha)}`;
     info.append(n, d);
     const mk = (label, cls, fn) => { const b = document.createElement('button'); b.className = `text-xs font-bold px-2.5 py-2 rounded-lg ${cls}`; b.textContent = label; b.onclick = fn; return b; };
     row.append(info,
-      mk('Copiar', 'bg-[#2b1b4a] text-white', () => copyText(h.link)),
-      mk('WA', 'bg-[#25D366] text-white', () => openWA(h.phone, inviteText(h.cliente, h.link))),
-      mk('✕', 'bg-[#f3eefb] text-[#b71c1c]', () => {
+      mk('Copiar', 'bg-[#023852] text-white', () => copyText(h.link)),
+      mk('WA', 'bg-[#079fa0] text-white', () => openWA(h.phone, inviteText(h.cliente, h.link))),
+      mk('✕', 'bg-[#dff3ec] text-[#dc2e2f]', () => {
         if (!confirm(`¿Eliminar el enlace de ${h.cliente} del historial?`)) return;
         store.set('rp_links', store.get('rp_links', []).filter(x => x.id !== h.id)); renderHistory();
       }));
@@ -934,11 +937,11 @@ $('histSearch').addEventListener('input', renderHistory);
 $('vCheck').onclick = () => {
   const id = $('vId').value.trim(), code = $('vCode').value.trim().toUpperCase();
   const out = $('vResult');
-  if (!id || !code) { out.textContent = 'Completa ID y código'; out.style.color = '#b71c1c'; return; }
+  if (!id || !code) { out.textContent = 'Completa ID y código'; out.style.color = '#dc2e2f'; return; }
   let hit = 0;
   for (let n = 1; n <= CONFIG.MAX_SPINS * 2; n++) if (prizeCode(id, 'TOTAL' + n) === code) hit = n;
-  if (hit) { out.textContent = `✅ Código válido: ${boletasTxt(hit)} acumuladas`; out.style.color = '#2e7d32'; }
-  else { out.textContent = '❌ El código no corresponde a ningún premio de ese ID'; out.style.color = '#b71c1c'; }
+  if (hit) { out.textContent = `✅ Código válido: ${boletasTxt(hit)} acumuladas`; out.style.color = '#079fa0'; }
+  else { out.textContent = '❌ El código no corresponde a ningún premio de ese ID'; out.style.color = '#dc2e2f'; }
 };
 
 $('savePin').onclick = () => {

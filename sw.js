@@ -1,5 +1,5 @@
-/* Service Worker — PrestaYa Ruleta v1.4 */
-const CACHE = 'prestaya-ruleta-v1.4';
+/* Service Worker — PrestaYa Ruleta v1.5 */
+const CACHE = 'prestaya-ruleta-v1.5';
 const SHELL = ['./', './index.html', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
