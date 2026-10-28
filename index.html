@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PrestaYa</title>
+<meta name="description" content="Gira la ruleta y gana boletas extra">
+<meta name="theme-color" content="#7f0d0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PrestaYa">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script>
+/* ============================================================
+   ICONO SVG + MANIFEST EMBEBIDO (Data URI)
+   ============================================================ */
+const APP_VERSION = '1.3';
+const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
+
+function makeIconSVG(){
+  const cx = 256, r = 210;
+  let paths = '';
+  for (let i = 0; i < 12; i++) {
+    const a0 = (i * 30 - 90) * Math.PI / 180, a1 = ((i + 1) * 30 - 90) * Math.PI / 180;
+    const x0 = cx + r * Math.cos(a0), y0 = cx + r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1), y1 = cx + r * Math.sin(a1);
+    paths += `<path d="M${cx},${cx} L${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${WHEEL_COLORS[i]}" stroke="#fff" stroke-width="3"/>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#1a0b3d"/><circle cx="256" cy="256" r="240" fill="#B71C1C"/>${paths}<circle cx="256" cy="256" r="58" fill="#9e9e9e"/><circle cx="256" cy="256" r="48" fill="#fff"/><circle cx="256" cy="256" r="38" fill="#fff" stroke="#bdbdbd" stroke-width="4"/></svg>`;
+}
+
+(function setupManifest(){
+  const svgURI = 'data:image/svg+xml,' + encodeURIComponent(makeIconSVG());
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+
+  const fav = document.createElement('link');
+  fav.rel = 'icon'; fav.type = 'image/svg+xml'; fav.href = svgURI;
+  document.head.appendChild(fav);
+
+  if (!/^https?:$/.test(location.protocol)) return; // abierto como archivo local
+  const manifest = {
+    name: 'PrestaYa - Ruleta',
+    short_name: 'PrestaYa',
+    description: 'Gira la ruleta y gana boletas extra',
+    id: base,
+    start_url: location.href,          // conserva el enlace personal del cliente al instalar
+    scope: base,
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#1a0b3d',
+    theme_color: '#7f0d0d',
+    lang: 'es',
+    icons: [
+      { src: base + 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: base + 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+      { src: svgURI, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
+    ]
+  };
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
+  document.head.appendChild(link);
+})();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --crimson:#b71c1c; --crimson-dark:#7f0d0d; --gold:#ffc83d;
+    --bg1:#2a0f5c; --bg2:#12052e;
+  }
+  *{ -webkit-tap-highlight-color: transparent; }
+  html,body{ background:var(--bg2); }
+  body{
+    font-family:'Baloo 2', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    min-height:100vh; min-height:100dvh;
+    background:
+      radial-gradient(ellipse at 50% 35%, rgba(255,200,61,.18), transparent 55%),
+      repeating-conic-gradient(from 0deg at 50% 38%, rgba(255,255,255,.035) 0 10deg, transparent 10deg 20deg),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+    background-attachment: fixed;
+    color:#fff; overflow-x:hidden;
+  }
+  .title{
+    font-weight:800; letter-spacing:.5px; line-height:1;
+    background:linear-gradient(180deg,#fff6c9,#ffc83d 55%,#ff9d00);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.35));
+  }
+  .chip{ background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); border-radius:999px; }
+  .icon-btn{
+    width:42px; height:42px; border-radius:14px; display:grid; place-items:center;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+  }
+  .icon-btn:active{ transform:scale(.94); }
+
+  /* ---------- Ruleta ---------- */
+  #wheelWrap{ width:min(84vw, 400px); aspect-ratio:1/1; position:relative; }
+  #wheelGlow{
+    position:absolute; inset:-6%; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,200,61,.35), transparent 65%);
+    filter:blur(6px); pointer-events:none;
+  }
+  #wheel{
+    position:absolute; inset:0; width:100%; height:100%;
+    border-radius:50%;
+    box-shadow:0 18px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(255,255,255,.08);
+    will-change:transform; touch-action:none;
+  }
+  #pointer{
+    position:absolute; top:50%; left:-7%; width:20%; transform:translateY(-50%);
+    transform-origin:20% 50%; z-index:5; pointer-events:none;
+    filter:drop-shadow(2px 4px 4px rgba(0,0,0,.5));
+  }
+  #pointer.kick{ animation:kick .12s ease-out; }
+  @keyframes kick{ 0%{ transform:translateY(-50%) rotate(0) } 40%{ transform:translateY(-50%) rotate(-16deg) } 100%{ transform:translateY(-50%) rotate(0) } }
+
+  #hubBtn{
+    position:absolute; top:50%; left:50%; width:16%; height:16%;
+    transform:translate(-50%,-50%); border-radius:50%; z-index:6;
+    background:radial-gradient(circle at 35% 30%, #ffffff, #f1f1f1 60%, #d9d9d9);
+    border:2px solid #9e9e9e;
+    box-shadow:0 0 0 3px #fff, 0 0 0 6px #8a8a8a, 0 0 0 7px #c7c7c7, 0 5px 12px rgba(0,0,0,.45);
+    color:var(--crimson); font-weight:800; font-size:clamp(10px,2.9vw,14px); letter-spacing:.3px;
+    transition:transform .15s;
+  }
+  #hubBtn:not(:disabled):active{ transform:translate(-50%,-50%) scale(.93); }
+  #hubBtn:disabled{ color:#9e9e9e; }
+
+  .spin-btn{
+    font-weight:800; font-size:1.25rem; letter-spacing:.5px; color:#fff;
+    padding:.85rem 2.2rem; border-radius:999px;
+    background:linear-gradient(180deg,#ff5252,#c62828 55%,#8e0000);
+    box-shadow:0 6px 0 #5c0000, 0 12px 24px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.35);
+    transition:transform .1s, box-shadow .1s, filter .2s;
+  }
+  .spin-btn:not(:disabled):active{ transform:translateY(5px); box-shadow:0 1px 0 #5c0000, 0 6px 12px rgba(0,0,0,.4); }
+  .spin-btn:disabled{ filter:grayscale(.85) brightness(.75); }
+  .pulse:not(:disabled){ animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.05) } }
+
+  /* ---------- Modales ---------- */
+  .modal{
+    position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(8,2,22,.72); backdrop-filter:blur(4px);
+    opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  .modal.open{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    width:100%; max-width:380px; border-radius:26px; padding:26px 22px 20px; text-align:center;
+    background:linear-gradient(180deg,#ffffff,#fff7e6); color:#2b1b4a;
+    border:4px solid var(--gold);
+    box-shadow:0 0 0 6px var(--crimson), 0 24px 60px rgba(0,0,0,.6);
+    transform:scale(.85) translateY(20px); transition:transform .35s cubic-bezier(.2,1.4,.4,1);
+  }
+  .modal.open .modal-card{ transform:scale(1) translateY(0); }
+  .prize-box{
+    margin:14px 0 8px; padding:14px 12px; border-radius:18px;
+    background:linear-gradient(180deg,#b71c1c,#7f0d0d); color:#fff;
+    font-weight:800; font-size:1.6rem; line-height:1.1;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.25), 0 6px 14px rgba(127,13,13,.35);
+  }
+  .prize-box.soft{ background:linear-gradient(180deg,#5e35b1,#3a1f7a); font-size:1.3rem; }
+  .btn{ border-radius:14px; padding:.75rem 1rem; font-weight:700; width:100%; transition:transform .1s; }
+  .btn:active{ transform:scale(.97); }
+  .btn-wa{ background:#25D366; color:#fff; }
+  .btn-dark{ background:#2b1b4a; color:#fff; }
+  .btn-ghost{ background:#efe9f8; color:#2b1b4a; }
+  .btn-red{ background:var(--crimson); color:#fff; }
+
+  /* ---------- Panel admin ---------- */
+  .sheet{
+    position:fixed; inset:0; z-index:45; background:#f6f3fb; color:#22163d;
+    transform:translateY(100%); transition:transform .35s cubic-bezier(.2,.9,.3,1);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .sheet.open{ transform:translateY(0); }
+  .card{ background:#fff; border-radius:20px; padding:16px; box-shadow:0 2px 10px rgba(40,20,80,.08); }
+  .field{ width:100%; border:2px solid #e3dcf0; border-radius:12px; padding:.65rem .8rem; font-size:1rem; background:#fff; color:#22163d; }
+  .field:focus{ outline:none; border-color:#7e57c2; }
+  .label{ font-size:.8rem; font-weight:700; color:#6b5b8a; margin-bottom:4px; display:block; }
+
+  .notice{
+    border-radius:20px; padding:16px; text-align:center;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25);
+  }
+  #toast{
+    position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
+    background:#22163d; color:#fff; padding:.6rem 1rem; border-radius:12px; font-weight:600;
+    opacity:0; transition:all .25s; z-index:70; pointer-events:none; max-width:90vw; text-align:center;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .acc{
+    border-radius:22px; padding:16px; background:linear-gradient(180deg,rgba(127,13,13,.55),rgba(42,15,92,.6));
+    border:2px solid var(--gold); box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .acc-total{ background:var(--gold); color:#5c0000; font-weight:800; border-radius:999px; padding:.15rem .8rem; font-size:1rem; white-space:nowrap; }
+  .acc-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:.55rem .8rem; border-radius:14px; background:rgba(255,255,255,.08); font-weight:700; }
+  .acc-row.win{ background:rgba(255,200,61,.18); border:1px solid rgba(255,200,61,.6); color:#fff3b0; }
+  .acc-row.pending{ opacity:.55; font-weight:600; }
+  .send-box{
+    border-radius:22px; padding:18px 16px; text-align:center;
+    background:linear-gradient(180deg,rgba(37,211,102,.25),rgba(18,5,46,.6));
+    border:2px solid #25D366; box-shadow:0 10px 26px rgba(0,0,0,.35);
+    animation:popIn .45s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes popIn{ from{ transform:scale(.85); opacity:0 } to{ transform:scale(1); opacity:1 } }
+  .switch{ position:relative; width:52px; height:30px; flex:none; border-radius:999px; background:#cfc6e0; transition:background .2s; }
+  .switch::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.25); transition:transform .2s; }
+  #infToggle:checked + .switch{ background:#25D366; }
+  #infToggle:checked + .switch::after{ transform:translateX(22px); }
+  #confetti{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; }
+</style>
+</head>
+
+<body>
+<canvas id="confetti"></canvas>
+
+<main class="max-w-md mx-auto px-4 pb-10 flex flex-col items-center" style="padding-top:max(16px, env(safe-area-inset-top));">
+
+  <!-- Encabezado -->
+  <header class="w-full flex items-start justify-between gap-3">
+    <div>
+      <h1 class="title text-4xl sm:text-5xl">PrestaYa</h1>
+      <p class="text-sm text-white/75 mt-1">¡Gira la ruleta y gana boletas extra!</p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <button id="btnInstall" class="icon-btn hidden" title="Instalar app" aria-label="Instalar app">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      </button>
+      <button id="btnAdmin" class="icon-btn hidden" title="Panel de administración" aria-label="Panel de administración">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Estado del participante -->
+  <div id="statusChip" class="chip mt-4 px-4 py-1.5 text-base font-bold"></div>
+  <p id="playerName" class="text-sm text-white/75 mt-2 hidden"></p>
+
+  <!-- Ruleta -->
+  <section class="mt-6 mb-2 flex justify-center w-full">
+    <div id="wheelWrap">
+      <div id="wheelGlow"></div>
+      <canvas id="wheel" aria-label="Ruleta de 12 casillas"></canvas>
+      <svg id="pointer" viewBox="0 0 100 70" aria-hidden="true">
+        <defs>
+          <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#ffc83d"/><stop offset="1" stop-color="#e09100"/>
+          </linearGradient>
+        </defs>
+        <path d="M4 10 Q4 4 10 5 L92 30 Q98 35 92 40 L10 65 Q4 66 4 60 Z" fill="url(#pg)" stroke="#7f0d0d" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="22" cy="35" r="8" fill="#b71c1c" stroke="#fff" stroke-width="3"/>
+      </svg>
+      <button id="hubBtn" aria-label="Girar la ruleta">GIRAR</button>
+    </div>
+  </section>
+
+  <button id="spinBtn" class="spin-btn pulse mt-6">¡GIRAR LA RULETA!</button>
+
+  <!-- Aviso (enlace usado / inválido) -->
+  <div id="notice" class="notice hidden mt-6 w-full"></div>
+
+  <!-- Premios acumulados -->
+  <section id="accBox" class="acc w-full mt-6">
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="font-extrabold text-lg">🎁 Premios acumulados</h2>
+      <span id="accTotal" class="acc-total">0 boletas</span>
+    </div>
+    <div id="accList" class="mt-3 flex flex-col gap-2"></div>
+    <p id="accHint" class="text-sm text-center text-white/80 mt-3 hidden"></p>
+  </section>
+
+  <!-- Enviar resultados (solo si ganó, al terminar los giros) -->
+  <section id="sendBox" class="send-box w-full mt-5 hidden">
+    <div class="text-4xl leading-none">🎉</div>
+    <p id="sendTitle" class="text-xl font-extrabold mt-2"></p>
+    <p class="text-sm text-white/85 mt-1">Envía tus resultados por WhatsApp para reclamar tu premio.</p>
+    <button id="sendBtn" class="btn btn-wa mt-4 text-lg flex items-center justify-center gap-2">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
+      Enviar resultados por WhatsApp
+    </button>
+  </section>
+
+  <p class="mt-8 text-xs text-white/45">PrestaYa · v<span class="appVersion"></span></p>
+</main>
+
+<!-- Modal de resultado -->
+<div id="resultModal" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div id="resIcon" class="text-6xl leading-none">🎉</div>
+    <h2 id="resTitle" class="text-3xl font-extrabold mt-2" style="color:#b71c1c"></h2>
+    <p id="resSub" class="text-base text-[#5a4a78] mt-1"></p>
+    <div id="resPrize" class="prize-box"></div>
+    <p id="resMeta" class="text-xs text-[#7a6b96]"></p>
+    <p id="resCode" class="text-xs text-[#7a6b96] mt-1"></p>
+    <p id="resLeft" class="text-base font-bold mt-3" style="color:#5e35b1"></p>
+    <div class="mt-4 flex flex-col gap-2">
+      <button id="resClaim" class="btn btn-wa hidden">Enviar resultados por WhatsApp</button>
+      <button id="resClose" class="btn btn-dark">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Panel de administración -->
+<div id="adminSheet" class="sheet" aria-hidden="true">
+  <div class="max-w-md mx-auto px-4 pb-10" style="padding-top:max(16px, env(safe-area-inset-top));">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-extrabold">Panel de administración</h2>
+      <button id="adminClose" class="w-10 h-10 rounded-xl bg-white shadow text-xl font-bold" aria-label="Cerrar">✕</button>
+    </div>
+
+    <!-- PIN -->
+    <div id="pinView" class="card text-center">
+      <p class="font-bold text-lg">Ingresa tu PIN</p>
+      <p class="text-sm text-[#6b5b8a] mb-3">PIN inicial: 1234 (cámbialo en Ajustes)</p>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" class="field text-center text-2xl tracking-[.4em]" placeholder="••••">
+      <button id="pinOk" class="btn btn-red mt-3">Entrar</button>
+    </div>
+
+    <!-- Contenido admin -->
+    <div id="adminView" class="hidden flex flex-col gap-4">
+
+      <div class="card">
+        <h3 class="font-extrabold text-lg mb-3">Generar enlace por cliente</h3>
+        <label class="label" for="gName">Nombre del cliente *</label>
+        <input id="gName" class="field" placeholder="Ej: Juan Pérez" autocomplete="off">
+        <div class="grid grid-cols-[1fr_auto] gap-2 mt-3 items-end">
+          <div>
+            <label class="label" for="gId">ID único</label>
+            <input id="gId" class="field" autocomplete="off">
+          </div>
+          <button id="gNewId" class="btn btn-ghost !w-auto px-3" title="Nuevo ID">↻</button>
+        </div>
+        <label class="label mt-3" for="gPhone">Celular del cliente (opcional, para enviarle el enlace)</label>
+        <input id="gPhone" class="field" inputmode="tel" placeholder="Ej: 3001234567">
+        <button id="gGenerate" class="btn btn-red mt-4">Generar enlace</button>
+
+        <div id="gResult" class="hidden mt-4">
+          <label class="label">Enlace generado</label>
+          <textarea id="gLink" class="field text-sm" rows="3" readonly></textarea>
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <button id="gCopy" class="btn btn-dark">Copiar</button>
+            <button id="gSend" class="btn btn-wa">Enviar por WhatsApp</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-extrabold text-lg">Enlaces generados</h3>
+          <span id="histCount" class="text-sm text-[#6b5b8a]"></span>
+        </div>
+        <input id="histSearch" class="field mb-3" placeholder="Buscar por nombre o ID">
+        <div id="histList" class="flex flex-col gap-2"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="font-extrabold text-lg mb-1">Verificar premio</h3>
+        <p class="text-sm text-[#6b5b8a] mb-3">Cuando un cliente reclame, pide su ID y el código de verificación que le mostró su cajón de premios.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="vId" class="field" placeholder="ID">
+          <input id="vCode" class="field uppercase" placeholder="Código">
+        </div>
+        <button id="vCheck" class="btn btn-dark mt-3">Verificar</button>
+        <p id="vResult" class="mt-3 font-bold text-center"></p>
+      </div>
+
+      <div class="card">
+        <h3 class="font-extrabold text-lg mb-3">Ajustes</h3>
+        <label class="label" for="newPin">Nuevo PIN</label>
+        <div class="grid grid-cols-[1fr_auto] gap-2">
+          <input id="newPin" type="password" inputmode="numeric" maxlength="8" class="field" placeholder="4 a 8 dígitos">
+          <button id="savePin" class="btn btn-dark !w-auto px-4">Guardar</button>
+        </div>
+        <label class="flex items-center justify-between gap-3 mt-4 p-3 rounded-xl bg-[#f3eefb] cursor-pointer">
+          <span>
+            <span class="block font-bold">♾️ Giros de prueba infinitos</span>
+            <span class="block text-xs text-[#6b5b8a]">Solo en la vista sin enlace de este dispositivo. Los enlaces de clientes siguen con 2 giros.</span>
+          </span>
+          <input id="infToggle" type="checkbox" class="sr-only">
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+        <button id="resetDevice" class="btn btn-ghost mt-3">Borrar giros registrados en este dispositivo</button>
+        <p class="text-xs text-[#6b5b8a] mt-3">Versión <span class="appVersion"></span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN
+   ============================================================ */
+const CONFIG = {
+  VERSION: APP_VERSION,
+  SECRET: 'RULETA-BOLETAS-2026',   // cámbialo para que nadie pueda fabricar enlaces válidos
+  DEFAULT_PIN: '1234',
+  SPIN_MS: 6500,
+  COUNTRY_CODE: '57',
+  MAX_SPINS: 2,
+  WHATSAPP: '573162685282'   // número que recibe los resultados
+};
+
+const SEGMENTS = [
+  { text:'¡SUERTE EN LA PRÓXIMA!', prize:false },
+  { text:'1 BOLETA MÁS',           prize:true, boletas:1 },
+  { text:'SIGUE INTENTANDO',       prize:false, dark:true },
+  { text:'¡CASI LO LOGRAS!',       prize:false },
+  { text:'GRACIAS POR PARTICIPAR', prize:false },
+  { text:'2 BOLETAS',              prize:true, boletas:2 },
+  { text:'¡ÁNIMO, TÚ PUEDES!',     prize:false },
+  { text:'LA SUERTE TE ESPERA',    prize:false },
+  { text:'¡OTRA VEZ SERÁ!',        prize:false },
+  { text:'1 BOLETA MÁS',           prize:true, boletas:1 },
+  { text:'SIGUE PARTICIPANDO',     prize:false },
+  { text:'¡HOY NO, MAÑANA SÍ!',    prize:false }
+].map((s, i) => ({ ...s, n: i + 1, color: WHEEL_COLORS[i] }));
+
+const SEG = 360 / SEGMENTS.length;
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+const $ = id => document.getElementById(id);
+document.querySelectorAll('.appVersion').forEach(el => el.textContent = CONFIG.VERSION);
+
+const store = {
+  get(k, def = null){ try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch { return def; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
+  del(k){ try { localStorage.removeItem(k); } catch {} },
+  keys(){ try { return Object.keys(localStorage); } catch { return []; } }
+};
+
+function fnv(str){
+  let h = 0x811c9dc5;
+  for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36);
+}
+const linkToken = (cliente, id, wa) => (fnv(`${cliente}|${id}|${wa}|${CONFIG.SECRET}`) + fnv(`${CONFIG.SECRET}#${id}`)).slice(0, 10);
+const prizeCode = (id, text) => fnv(`${id}|${text}|${CONFIG.SECRET}|premio`).toUpperCase().slice(0, 6);
+
+function randInt(n){
+  if (window.crypto && crypto.getRandomValues) {
+    const a = new Uint32Array(1), lim = Math.floor(0x100000000 / n) * n;
+    do { crypto.getRandomValues(a); } while (a[0] >= lim);
+    return a[0] % n;
+  }
+  return Math.floor(Math.random() * n);
+}
+
+function normPhone(p){
+  let d = String(p || '').replace(/\D/g, '');
+  if (d.length === 10 && d.startsWith('3')) d = CONFIG.COUNTRY_CODE + d;
+  return d;
+}
+const fmtDate = iso => new Date(iso).toLocaleString('es-CO', { dateStyle:'medium', timeStyle:'short' });
+
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function copyText(text){
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove();
+  }
+  toast('Enlace copiado');
+}
+const openWA = (phone, text) => window.open(`https://wa.me/${phone ? normPhone(phone) : ''}?text=${encodeURIComponent(text)}`, '_blank');
+
+/* ============================================================
+   MODO SEGÚN EL ENLACE
+   ============================================================ */
+const qs = new URLSearchParams(location.search);
+const P = {
+  cliente: (qs.get('cliente') || '').trim(),
+  id: (qs.get('id') || '').trim(),
+  wa: (qs.get('wa') || '').trim(),
+  t: (qs.get('t') || '').trim()
+};
+let MODE = 'demo'; // demo | client | invalid
+if (P.cliente || P.id) {
+  if (!P.id) P.id = P.cliente;
+  MODE = linkToken(P.cliente, P.id, P.wa) === P.t ? 'client' : 'invalid';
+}
+
+/* ---------- Giros y premios acumulados ---------- */
+let demoSpins = [];   // la vista sin enlace (prueba) no guarda nada: al recargar vuelve a 2 giros
+const getSpins = () => MODE === 'client' ? store.get('rp_giros_' + P.id, []) : (MODE === 'demo' ? demoSpins : []);
+function addSpin(rec){
+  if (MODE === 'client') { const a = getSpins(); a.push(rec); store.set('rp_giros_' + P.id, a); }
+  else demoSpins.push(rec);
+}
+const isInfinite = () => MODE === 'demo' && store.get('rp_infinite', false) === true;
+const remaining = () => MODE === 'invalid' ? 0 : (isInfinite() ? Infinity : Math.max(0, CONFIG.MAX_SPINS - getSpins().length));
+const totalBoletas = spins => spins.reduce((s, r) => s + (r.boletas || 0), 0);
+const boletasTxt = n => n === 1 ? '1 boleta' : `${n} boletas`;
+const totalCode = n => prizeCode(P.id, 'TOTAL' + n);
+const girosTxt = n => n === 1 ? '1 giro' : `${n} giros`;
+
+function renderStatus(){
+  const left = remaining(), used = getSpins().length;
+  const chip = $('statusChip');
+  if (MODE === 'invalid') chip.textContent = '⚠️ Enlace no válido';
+  else if (isInfinite()) chip.textContent = '♾️ Giros de prueba ilimitados';
+  else if (left === 0) chip.textContent = '🔒 Ya no te quedan giros';
+  else if (used === 0) chip.textContent = `🎯 Tienes ${girosTxt(left)} disponible${left === 1 ? '' : 's'}`;
+  else chip.textContent = `🎯 Te queda${left === 1 ? '' : 'n'} ${girosTxt(left)}`;
+
+  const pn = $('playerName');
+  pn.textContent = MODE === 'client' ? `Participante: ${P.cliente || P.id}` : '';
+  pn.classList.toggle('hidden', MODE !== 'client');
+
+  const blocked = spinning || left === 0;
+  $('spinBtn').disabled = blocked; $('hubBtn').disabled = blocked;
+  $('spinBtn').textContent = left === 0 ? 'SIN GIROS' : '¡GIRAR LA RULETA!';
+  $('btnAdmin').classList.toggle('hidden', !(MODE === 'demo' || qs.has('admin')));
+
+  const n = $('notice');
+  n.innerHTML = '';
+  if (MODE === 'invalid') {
+    n.innerHTML = '<p class="text-lg font-extrabold">Este enlace no es válido</p><p class="text-sm text-white/80 mt-1">Puede estar incompleto o haber sido modificado. Pide un nuevo enlace a quien te lo envió.</p>';
+    n.classList.remove('hidden');
+  } else n.classList.add('hidden');
+
+  renderAcc();
+}
+
+function renderAcc(){
+  const box = $('accBox');
+  if (MODE === 'invalid') { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  const spins = getSpins(), left = remaining(), tot = totalBoletas(spins);
+  const list = $('accList'); list.innerHTML = '';
+  const rows = isInfinite() ? Math.max(1, spins.length) : CONFIG.MAX_SPINS;
+  for (let i = Math.max(0, rows - 20); i < rows; i++) {
+    const r = spins[i];
+    const girando = spinning && i === spins.length - 1;
+    const row = document.createElement('div');
+    row.className = 'acc-row' + (!r || girando ? ' pending' : (r.prize ? ' win' : ''));
+    const a = document.createElement('span'); a.textContent = `Giro ${i + 1}`;
+    const b = document.createElement('span'); b.className = 'text-right';
+    b.textContent = girando ? 'Girando…' : (r ? (r.prize ? `🎟️ ${r.premio}` : r.premio) : 'Pendiente');
+    row.append(a, b); list.append(row);
+  }
+  $('accTotal').textContent = boletasTxt(spinning ? totalBoletas(spins.slice(0, -1)) : tot);
+
+  const hint = $('accHint'), send = $('sendBox');
+  hint.classList.add('hidden'); send.classList.add('hidden');
+  if (spinning) return;
+  if (isInfinite()) {
+    if (spins.length) {
+      hint.innerHTML = '';
+      const b = document.createElement('button'); b.className = 'underline font-bold'; b.textContent = 'Reiniciar giros de prueba';
+      b.onclick = () => { demoSpins = []; renderStatus(); };
+      hint.append(`${spins.length} giro${spins.length === 1 ? '' : 's'} de prueba · `, b);
+      hint.classList.remove('hidden');
+    }
+    return;
+  }
+  if (tot > 0 && left > 0) { hint.textContent = `Te queda${left === 1 ? '' : 'n'} ${girosTxt(left)} para sumar más boletas.`; hint.classList.remove('hidden'); }
+  else if (tot > 0 && left === 0) {
+    if (MODE === 'client') { hint.textContent = `Código de verificación: ${totalCode(tot)}`; hint.classList.remove('hidden'); }
+    $('sendTitle').textContent = `¡Ganaste ${boletasTxt(tot)}!`;
+    send.classList.remove('hidden');
+  } else if (tot === 0 && left === 0) { hint.textContent = 'Esta vez no ganaste boletas. ¡Suerte en la próxima!'; hint.classList.remove('hidden'); }
+}
+
+/* ============================================================
+   DIBUJO DE LA RULETA (canvas)
+   ============================================================ */
+const wheel = $('wheel');
+let rotation = 0;
+
+function lighten(hex, amt){
+  const n = parseInt(hex.slice(1), 16);
+  const r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const m = v => Math.round(v + (255 - v) * amt);
+  return `rgb(${m(r)},${m(g)},${m(b)})`;
+}
+
+function splitLines(text){
+  if (text.length <= 12) return [text];
+  const w = text.split(' ');
+  let best = [text], bestMax = Infinity;
+  for (let i = 1; i < w.length; i++) {
+    const a = w.slice(0, i).join(' '), b = w.slice(i).join(' ');
+    const m = Math.max(a.length, b.length);
+    if (m < bestMax) { bestMax = m; best = [a, b]; }
+  }
+  return best;
+}
+
+function drawWheel(){
+  const rect = wheel.getBoundingClientRect();
+  if (!rect.width) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const S = Math.round(rect.width * dpr);
+  wheel.width = S; wheel.height = S;
+  const c = wheel.getContext('2d');
+  const C = S / 2, R = S / 2, ring = R * 0.085, r = R - ring;
+  const FONT = '"Baloo 2", system-ui, sans-serif';
+  c.clearRect(0, 0, S, S);
+
+  // Borde exterior carmesí
+  const rg = c.createRadialGradient(C, C, r, C, C, R);
+  rg.addColorStop(0, '#6d0000'); rg.addColorStop(.45, '#d32f2f'); rg.addColorStop(1, '#7f0000');
+  c.beginPath(); c.arc(C, C, R - 0.5, 0, Math.PI * 2); c.fillStyle = rg; c.fill();
+
+  // Segmentos
+  SEGMENTS.forEach((s, i) => {
+    const a0 = i * SEG * Math.PI / 180, a1 = (i + 1) * SEG * Math.PI / 180;
+    c.beginPath(); c.moveTo(C, C); c.arc(C, C, r, a0, a1); c.closePath();
+    const g = c.createRadialGradient(C, C, r * 0.15, C, C, r);
+    g.addColorStop(0, lighten(s.color, .35)); g.addColorStop(.55, s.color); g.addColorStop(1, s.color);
+    c.fillStyle = g; c.fill();
+  });
+  // Divisiones blancas
+  c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = Math.max(1.5, S * 0.005);
+  SEGMENTS.forEach((_, i) => {
+    const a = i * SEG * Math.PI / 180;
+    c.beginPath(); c.moveTo(C, C); c.lineTo(C + r * Math.cos(a), C + r * Math.sin(a)); c.stroke();
+  });
+  // Línea interior del aro
+  c.beginPath(); c.arc(C, C, r, 0, Math.PI * 2); c.lineWidth = Math.max(2, S * 0.007); c.strokeStyle = '#fff'; c.stroke();
+
+  // Luces del aro
+  const lights = 24;
+  for (let k = 0; k < lights; k++) {
+    const a = (k / lights) * Math.PI * 2;
+    const x = C + (R - ring / 2) * Math.cos(a), y = C + (R - ring / 2) * Math.sin(a);
+    c.beginPath(); c.arc(x, y, ring * 0.22, 0, Math.PI * 2);
+    c.fillStyle = k % 2 ? '#fff6c9' : '#ffc83d';
+    c.shadowColor = '#ffe082'; c.shadowBlur = ring * 0.5; c.fill(); c.shadowBlur = 0;
+  }
+
+  // Textos
+  SEGMENTS.forEach((s, i) => {
+    const mid = (i + 0.5) * SEG * Math.PI / 180;
+    c.save(); c.translate(C, C); c.rotate(mid + Math.PI); // +x apunta hacia el centro
+    const fill = s.dark ? '#3a2600' : (s.prize ? '#fff59d' : '#ffffff');
+    const stroke = s.dark ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.4)';
+    c.textBaseline = 'middle'; c.lineJoin = 'round';
+
+    // Número (parte exterior)
+    const nf = r * 0.11;
+    c.font = `800 ${nf}px ${FONT}`; c.textAlign = 'center';
+    c.lineWidth = nf * 0.2; c.strokeStyle = stroke; c.strokeText(String(s.n), -r * 0.87, 0);
+    c.fillStyle = fill; c.fillText(String(s.n), -r * 0.87, 0);
+
+    // Premio orientado radialmente hacia el centro
+    const lines = splitLines(s.text);
+    const maxW = r * 0.5;
+    let fs = r * (lines.length > 1 ? 0.072 : 0.085);
+    c.font = `800 ${fs}px ${FONT}`;
+    const widest = Math.max(...lines.map(l => c.measureText(l).width));
+    if (widest > maxW) { fs *= maxW / widest; c.font = `800 ${fs}px ${FONT}`; }
+    c.textAlign = 'left';
+    lines.forEach((l, k) => {
+      const y = (k - (lines.length - 1) / 2) * fs * 1.02;
+      c.lineWidth = fs * 0.2; c.strokeStyle = stroke; c.strokeText(l, -r * 0.765, y);
+      c.fillStyle = fill; c.fillText(l, -r * 0.765, y);
+    });
+    c.restore();
+  });
+
+  // Centro blanco con doble borde gris metálico
+  const hubR = r * 0.175;
+  const mg = c.createLinearGradient(C - hubR, C - hubR, C + hubR, C + hubR);
+  mg.addColorStop(0, '#f5f5f5'); mg.addColorStop(.5, '#8d8d8d'); mg.addColorStop(1, '#d6d6d6');
+  c.beginPath(); c.arc(C, C, hubR, 0, Math.PI * 2); c.fillStyle = mg; c.fill();
+  c.beginPath(); c.arc(C, C, hubR * 0.86, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill();
+  c.beginPath(); c.arc(C, C, hubR * 0.74, 0, Math.PI * 2); c.lineWidth = hubR * 0.06; c.strokeStyle = '#a9a9a9'; c.stroke();
+}
+
+/* ============================================================
+   SONIDO
+   ============================================================ */
+let spinning = false;
+let AC = null;
+function initAudio(){ try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch {} }
+function beep(freq, dur, type = 'square', vol = 0.06, when = 0){
+  if (!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + when;
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+const playTick = () => beep(1400, 0.035, 'square', 0.04);
+function playWin(){ [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, 0.22, 'triangle', 0.12, i * 0.12)); }
+function playSoft(){ [440, 392, 349].forEach((f, i) => beep(f, 0.25, 'sine', 0.08, i * 0.16)); }
+
+/* ============================================================
+   GIRO (requestAnimationFrame con aceleración y desaceleración)
+   ============================================================ */
+// Perfil de velocidad: rampa de aceleración corta + frenado suave (cuártico)
+function ease(t){
+  const a = 0.12, tot = a / 2 + (1 - a) / 4;
+  if (t < a) return (t * t / (2 * a)) / tot;
+  const u = (t - a) / (1 - a);
+  return (a / 2 + (1 - a) / 4 * (1 - Math.pow(1 - u, 4))) / tot;
+}
+
+const pointer = $('pointer');
+function kickPointer(){ pointer.classList.remove('kick'); void pointer.getBoundingClientRect(); pointer.classList.add('kick'); }
+
+function spin(){
+  if (spinning) return;
+  if (remaining() <= 0) { renderStatus(); return; }
+  initAudio();
+
+  const idx = randInt(SEGMENTS.length);
+  const seg = SEGMENTS[idx];
+  // Se registra ANTES de animar: recargar la página durante el giro no devuelve el giro
+  const record = { premio: seg.text, numero: seg.n, prize: seg.prize, boletas: seg.boletas || 0, fecha: new Date().toISOString(), cliente: P.cliente };
+  addSpin(record);
+
+  spinning = true;
+  $('spinBtn').disabled = true; $('hubBtn').disabled = true;
+  $('spinBtn').classList.remove('pulse');
+  renderAcc();
+
+  // El puntero está a la izquierda (180°). Calculamos la rotación final para que la casilla elegida quede ahí.
+  const mid = (idx + 0.5) * SEG;
+  const jitter = (Math.random() * 2 - 1) * SEG * 0.32;
+  const targetMod = ((180 - mid - jitter) % 360 + 360) % 360;
+  const curMod = ((rotation % 360) + 360) % 360;
+  let delta = targetMod - curMod; if (delta < 0) delta += 360;
+  const total = delta + (6 + randInt(3)) * 360;
+  const start = rotation, t0 = performance.now(), D = CONFIG.SPIN_MS;
+  let lastTick = Math.floor(start / SEG);
+
+  function frame(now){
+    const t = Math.min(1, (now - t0) / D);
+    rotation = start + total * ease(t);
+    wheel.style.transform = `rotate(${rotation}deg)`;
+    const tick = Math.floor(rotation / SEG);
+    if (tick !== lastTick) { lastTick = tick; playTick(); kickPointer(); }
+    if (t < 1) requestAnimationFrame(frame);
+    else finish(seg, record);
+  }
+  requestAnimationFrame(frame);
+}
+
+function finish(seg, record){
+  spinning = false;
+  $('spinBtn').classList.add('pulse');
+  setTimeout(() => showResult(seg, record), 350);
+}
+
+/* ============================================================
+   RESULTADO
+   ============================================================ */
+function showResult(seg, record){
+  const who = P.cliente ? P.cliente.split(' ')[0] : '';
+  const left = remaining(), tot = totalBoletas(getSpins());
+  const prizeEl = $('resPrize');
+  prizeEl.textContent = seg.text;
+  if (seg.prize) {
+    $('resIcon').textContent = '🎉';
+    $('resTitle').textContent = '¡FELICITACIONES!';
+    $('resSub').textContent = who ? `${who}, ¡ganaste!` : '¡Ganaste!';
+    prizeEl.classList.remove('soft');
+    launchConfetti(); playWin();
+  } else {
+    $('resIcon').textContent = '🍀';
+    $('resTitle').textContent = '¡Gracias por participar!';
+    $('resSub').textContent = who ? `${who}, esta vez no hubo premio` : 'Esta vez no hubo premio';
+    prizeEl.classList.add('soft');
+    playSoft();
+  }
+  $('resMeta').textContent = `Casilla #${seg.n} · ${fmtDate(record.fecha)}${P.id ? ' · ID: ' + P.id : ''}`;
+  $('resCode').textContent = `Acumulado: ${boletasTxt(tot)}`;
+  $('resLeft').textContent = isInfinite() ? 'Giros de prueba ilimitados' : left > 0 ? `Te queda${left === 1 ? '' : 'n'} ${girosTxt(left)}` : 'Ya usaste todos tus giros';
+  $('resClose').textContent = left > 0 ? 'Seguir girando' : 'Ver mis premios';
+  $('resClaim').classList.toggle('hidden', !(left === 0 && tot > 0));
+  renderStatus();
+  $('resultModal').classList.add('open');
+}
+
+function claimWA(){
+  const spins = getSpins(), tot = totalBoletas(spins);
+  const detalle = spins.map((r, i) => `Giro ${i + 1}: ${r.premio}`).join('\n');
+  const quien = MODE === 'client' ? `Soy ${P.cliente} (ID ${P.id}).` : '(Prueba de la ruleta)';
+  const codigo = MODE === 'client' ? `\nCódigo de verificación: ${totalCode(tot)}` : '';
+  const msg = `¡Hola PrestaYa! ${quien} Estos son mis resultados en la ruleta:\n${detalle}\nTotal acumulado: ${boletasTxt(tot)}${codigo}`;
+  openWA(CONFIG.WHATSAPP, msg);
+}
+$('resClaim').onclick = claimWA;
+$('sendBtn').onclick = claimWA;
+$('resClose').onclick = () => {
+  $('resultModal').classList.remove('open'); renderStatus();
+  if (remaining() === 0) setTimeout(() => ($('sendBox').classList.contains('hidden') ? $('accBox') : $('sendBox')).scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+};
+$('resultModal').addEventListener('click', e => { if (e.target.id === 'resultModal') $('resClose').click(); });
+
+/* ============================================================
+   CONFETI (canvas de partículas)
+   ============================================================ */
+const cv = $('confetti'), cc = cv.getContext('2d');
+let parts = [], confRAF = null;
+function sizeConfetti(){ const d = Math.min(devicePixelRatio || 1, 2); cv.width = innerWidth * d; cv.height = innerHeight * d; cc.setTransform(d, 0, 0, d, 0, 0); }
+function launchConfetti(){
+  sizeConfetti();
+  const cols = ['#ff1744','#ffc400','#00e676','#2979ff','#d500f9','#ff9100','#ffffff','#18ffff'];
+  const W = innerWidth, H = innerHeight;
+  const burst = (x, y, n, angle, spread, speed) => {
+    for (let i = 0; i < n; i++) {
+      const a = angle + (Math.random() - .5) * spread, v = speed * (0.5 + Math.random() * 0.7);
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, w: 6 + Math.random() * 7, h: 8 + Math.random() * 10,
+        rot: Math.random() * 6.28, vr: (Math.random() - .5) * .35, col: cols[randInt(cols.length)],
+        shape: Math.random() < .25 ? 'c' : 'r', tilt: Math.random() * 6.28, life: 0 });
+    }
+  };
+  burst(0, H * 0.75, 110, -Math.PI / 3, 0.9, 17);
+  burst(W, H * 0.75, 110, -Math.PI * 2 / 3, 0.9, 17);
+  for (let i = 0; i < 90; i++) burst(Math.random() * W, -20, 1, Math.PI / 2, 0.6, 3);
+  if (!confRAF) confRAF = requestAnimationFrame(stepConfetti);
+}
+function stepConfetti(){
+  const W = innerWidth, H = innerHeight;
+  cc.clearRect(0, 0, W, H);
+  parts = parts.filter(p => p.y < H + 30 && p.life < 420);
+  for (const p of parts) {
+    p.life++; p.vy += 0.28; p.vx *= 0.985; p.vy *= 0.985;
+    p.tilt += 0.1; p.x += p.vx + Math.sin(p.tilt) * 0.6; p.y += p.vy; p.rot += p.vr;
+    cc.save(); cc.translate(p.x, p.y); cc.rotate(p.rot); cc.fillStyle = p.col;
+    if (p.shape === 'c') { cc.beginPath(); cc.arc(0, 0, p.w / 2, 0, 6.28); cc.fill(); }
+    else cc.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(p.tilt)), p.w, p.h * Math.abs(Math.cos(p.tilt)) + 1);
+    cc.restore();
+  }
+  if (parts.length) confRAF = requestAnimationFrame(stepConfetti);
+  else { confRAF = null; cc.clearRect(0, 0, W, H); }
+}
+
+/* ============================================================
+   PANEL DE ADMINISTRACIÓN
+   ============================================================ */
+const getPin = () => store.get('rp_pin', CONFIG.DEFAULT_PIN);
+function openAdmin(){
+  $('adminSheet').classList.add('open'); $('adminSheet').setAttribute('aria-hidden', 'false');
+  let ok = false; try { ok = sessionStorage.getItem('rp_admin') === '1'; } catch {}
+  showAdmin(ok);
+}
+function showAdmin(ok){
+  $('pinView').classList.toggle('hidden', ok);
+  $('adminView').classList.toggle('hidden', !ok);
+  if (ok) {
+    if (!$('gId').value) $('gId').value = newId();
+    renderHistory();
+  } else setTimeout(() => $('pinInput').focus(), 300);
+}
+$('btnAdmin').onclick = openAdmin;
+$('adminClose').onclick = () => { $('adminSheet').classList.remove('open'); $('adminSheet').setAttribute('aria-hidden', 'true'); };
+$('pinOk').onclick = () => {
+  if ($('pinInput').value === getPin()) {
+    try { sessionStorage.setItem('rp_admin', '1'); } catch {}
+    $('pinInput').value = ''; showAdmin(true);
+  } else { toast('PIN incorrecto'); $('pinInput').value = ''; }
+};
+$('pinInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('pinOk').click(); });
+
+function newId(){ return (Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 4)).toUpperCase(); }
+$('gNewId').onclick = () => { $('gId').value = newId(); };
+
+const baseURL = () => location.origin + location.pathname;
+function buildLink(cliente, id, wa){
+  const u = new URLSearchParams();
+  u.set('cliente', cliente); u.set('id', id);
+  if (wa) u.set('wa', wa);
+  u.set('t', linkToken(cliente, id, wa));
+  return baseURL() + '?' + u.toString();
+}
+const inviteText = (cliente, link) => `¡Hola ${cliente.split(' ')[0]}! 🎡 PrestaYa te regala 2 giros en la ruleta para ganar boletas extra. Entra aquí (enlace personal):\n${link}`;
+
+let lastGen = null;
+$('gGenerate').onclick = () => {
+  const cliente = $('gName').value.trim().replace(/\s+/g, ' ');
+  const id = $('gId').value.trim().replace(/\s+/g, '');
+  const wa = '';
+  if (!cliente) return toast('Escribe el nombre del cliente');
+  if (!id) return toast('Escribe un ID');
+  const hist = store.get('rp_links', []);
+  if (hist.some(h => h.id === id)) return toast('Ese ID ya existe, genera uno nuevo');
+  const link = buildLink(cliente, id, wa);
+  const phone = $('gPhone').value.trim();
+  lastGen = { cliente, id, link, phone, fecha: new Date().toISOString() };
+  hist.unshift(lastGen); store.set('rp_links', hist.slice(0, 300));
+  $('gLink').value = link; $('gResult').classList.remove('hidden');
+  $('gName').value = ''; $('gPhone').value = ''; $('gId').value = newId();
+  renderHistory(); toast('Enlace generado');
+};
+$('gCopy').onclick = () => lastGen && copyText(lastGen.link);
+$('gSend').onclick = () => lastGen && openWA(lastGen.phone, inviteText(lastGen.cliente, lastGen.link));
+
+function renderHistory(){
+  const q = $('histSearch').value.trim().toLowerCase();
+  const all = store.get('rp_links', []);
+  const list = all.filter(h => !q || h.cliente.toLowerCase().includes(q) || h.id.toLowerCase().includes(q));
+  $('histCount').textContent = `${all.length} en total`;
+  const box = $('histList'); box.innerHTML = '';
+  if (!list.length) { box.innerHTML = '<p class="text-sm text-center text-[#8a7aa8] py-3">Aún no hay enlaces</p>'; return; }
+  list.slice(0, 60).forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2 border border-[#ece6f6] rounded-xl p-2';
+    const info = document.createElement('div'); info.className = 'flex-1 min-w-0';
+    const n = document.createElement('p'); n.className = 'font-bold truncate'; n.textContent = h.cliente;
+    const d = document.createElement('p'); d.className = 'text-xs text-[#7a6b96]'; d.textContent = `ID ${h.id} · ${fmtDate(h.fecha)}`;
+    info.append(n, d);
+    const mk = (label, cls, fn) => { const b = document.createElement('button'); b.className = `text-xs font-bold px-2.5 py-2 rounded-lg ${cls}`; b.textContent = label; b.onclick = fn; return b; };
+    row.append(info,
+      mk('Copiar', 'bg-[#2b1b4a] text-white', () => copyText(h.link)),
+      mk('WA', 'bg-[#25D366] text-white', () => openWA(h.phone, inviteText(h.cliente, h.link))),
+      mk('✕', 'bg-[#f3eefb] text-[#b71c1c]', () => {
+        if (!confirm(`¿Eliminar el enlace de ${h.cliente} del historial?`)) return;
+        store.set('rp_links', store.get('rp_links', []).filter(x => x.id !== h.id)); renderHistory();
+      }));
+    box.append(row);
+  });
+}
+$('histSearch').addEventListener('input', renderHistory);
+
+$('vCheck').onclick = () => {
+  const id = $('vId').value.trim(), code = $('vCode').value.trim().toUpperCase();
+  const out = $('vResult');
+  if (!id || !code) { out.textContent = 'Completa ID y código'; out.style.color = '#b71c1c'; return; }
+  let hit = 0;
+  for (let n = 1; n <= CONFIG.MAX_SPINS * 2; n++) if (prizeCode(id, 'TOTAL' + n) === code) hit = n;
+  if (hit) { out.textContent = `✅ Código válido: ${boletasTxt(hit)} acumuladas`; out.style.color = '#2e7d32'; }
+  else { out.textContent = '❌ El código no corresponde a ningún premio de ese ID'; out.style.color = '#b71c1c'; }
+};
+
+$('savePin').onclick = () => {
+  const p = $('newPin').value.trim();
+  if (!/^\d{4,8}$/.test(p)) return toast('El PIN debe tener de 4 a 8 dígitos');
+  store.set('rp_pin', p); $('newPin').value = ''; toast('PIN actualizado');
+};
+$('infToggle').checked = store.get('rp_infinite', false) === true;
+$('infToggle').onchange = e => {
+  store.set('rp_infinite', e.target.checked);
+  demoSpins = [];
+  renderStatus();
+  toast(e.target.checked ? 'Giros de prueba infinitos activados' : 'Giros de prueba infinitos desactivados');
+};
+$('resetDevice').onclick = () => {
+  if (!confirm('Esto borra los giros guardados en ESTE dispositivo (útil para pruebas). ¿Continuar?')) return;
+  store.keys().filter(k => k.startsWith('rp_giros_')).forEach(k => store.del(k));
+  toast('Giros de este dispositivo borrados');
+};
+
+/* ============================================================
+   PWA: instalación + Service Worker
+   ============================================================ */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; $('btnInstall').classList.remove('hidden'); });
+$('btnInstall').onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null;
+  $('btnInstall').classList.add('hidden');
+};
+window.addEventListener('appinstalled', () => { $('btnInstall').classList.add('hidden'); toast('¡App instalada!'); });
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+
+/* ============================================================
+   INICIO
+   ============================================================ */
+$('spinBtn').onclick = spin;
+$('hubBtn').onclick = spin;
+let resizeT;
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(drawWheel, 120); });
+renderStatus();
+drawWheel();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawWheel);
+</script>
+</body>
+</html>
