@@ -16,7 +16,7 @@
 /* ============================================================
    ICONO SVG + MANIFEST EMBEBIDO (Data URI)
    ============================================================ */
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
 
 function makeIconSVG(){
@@ -79,7 +79,7 @@ function makeIconSVG(){
   }
   *{ -webkit-tap-highlight-color: transparent; }
   .hidden{ display:none !important; }   /* respaldo si el CDN de Tailwind no carga */
-  html,body{ background:var(--bg2); }
+  html,body{ background:var(--bg2); max-width:100%; overflow-x:hidden; overflow-x:clip; overscroll-behavior-x:none; }
   body{
     font-family:'Baloo 2', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height:100vh; min-height:100dvh;
@@ -110,10 +110,14 @@ function makeIconSVG(){
     background:radial-gradient(circle, rgba(159,216,197,.35), transparent 65%);
     filter:blur(6px); pointer-events:none;
   }
+  /* El recorte evita que la rueda girada ensanche la página (causa del movimiento lateral) */
+  #wheelClip{
+    position:absolute; inset:0; border-radius:50%; overflow:hidden; contain:paint;
+    box-shadow:0 18px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(255,255,255,.08);
+  }
   #wheel{
     position:absolute; inset:0; width:100%; height:100%;
     border-radius:50%;
-    box-shadow:0 18px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(255,255,255,.08);
     will-change:transform; touch-action:none;
   }
   #pointer{
@@ -172,6 +176,7 @@ function makeIconSVG(){
   .prize-btn{ width:100%; border:none; cursor:pointer; transition:transform .12s, filter .2s; animation:pulse 1.8s ease-in-out infinite; }
   .prize-btn:active{ transform:scale(.96); }
   .prize-box.soft{ background:linear-gradient(180deg,#079fa0,#035f70); font-size:1.3rem; }
+  .prize-box.wa{ background:linear-gradient(180deg,#0bb8b9,#079fa0 55%,#05787a); font-size:clamp(.95rem,4.3vw,1.15rem); white-space:nowrap; padding-left:8px; padding-right:8px; }
   .prize-box.exit{ background:linear-gradient(180deg,#0a5a80,#023852); font-size:1.3rem; animation:none; }
   .bye{ position:fixed; inset:0; z-index:80; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; background:linear-gradient(180deg,var(--bg1),var(--bg2)); }
   .btn{ border-radius:14px; padding:.75rem 1rem; font-weight:700; width:100%; transition:transform .1s; }
@@ -255,7 +260,7 @@ function makeIconSVG(){
   <section class="mt-6 mb-2 flex justify-center w-full">
     <div id="wheelWrap">
       <div id="wheelGlow"></div>
-      <canvas id="wheel" aria-label="Ruleta de 12 casillas"></canvas>
+      <div id="wheelClip"><canvas id="wheel" aria-label="Ruleta de 12 casillas"></canvas></div>
       <svg id="pointer" viewBox="0 0 100 70" aria-hidden="true">
         <defs>
           <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
@@ -614,7 +619,7 @@ function splitLines(text){
 }
 
 function drawWheel(){
-  const rect = wheel.getBoundingClientRect();
+  const rect = { width: wheel.offsetWidth };   // tamaño real, sin contar la rotación
   if (!rect.width) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const S = Math.round(rect.width * dpr);
@@ -773,7 +778,7 @@ function finish(seg, record){
 /* ============================================================
    RESULTADO
    ============================================================ */
-let resultExit = false;
+let resultExit = false, resultWA = false;
 function showResult(seg, record){
   const who = P.cliente ? P.cliente.split(' ')[0] : '';
   const left = remaining(), tot = totalBoletas(getSpins());
@@ -794,7 +799,11 @@ function showResult(seg, record){
   $('resCode').textContent = `Acumulado: ${boletasTxt(tot)}`;
   $('resLeft').textContent = isInfinite() ? 'Giros de prueba ilimitados' : left > 0 ? `Te queda${left === 1 ? '' : 'n'} ${girosTxt(left)}` : 'Ya usaste todos tus giros';
   prizeEl.textContent = left > 0 ? 'SEGUIR GIRANDO ▶' : 'VER MIS PREMIOS';
-  $('resClaim').classList.toggle('hidden', !(left === 0 && tot > 0));
+  // Último giro con premio: el recuadro se convierte en "Enviar resultados por WhatsApp"
+  resultWA = left === 0 && tot > 0;
+  $('resClaim').classList.add('hidden');
+  prizeEl.classList.toggle('wa', resultWA);
+  if (resultWA) prizeEl.textContent = 'Enviar resultados por WhatsApp';
 
   // Último giro sin ningún premio: mensaje mínimo + botón para salir
   resultExit = left === 0 && tot === 0;
@@ -829,6 +838,7 @@ function exitRoulette(){
 }
 $('resPrize').onclick = () => {
   if (resultExit) return exitRoulette();
+  if (resultWA) return claimWA();
   const more = remaining() > 0;
   closeResult();
   if (more) setTimeout(spin, 350);
