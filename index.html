@@ -16,7 +16,7 @@
 /* ============================================================
    ICONO SVG + MANIFEST EMBEBIDO (Data URI)
    ============================================================ */
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
 
 function makeIconSVG(){
@@ -830,10 +830,9 @@ function showResult(seg, record){
   // Último giro sin ningún premio: mensaje mínimo + botón para salir
   resultExit = left === 0 && tot === 0;
   ['resIcon', 'resCode', 'resLeft'].forEach(id => $(id).classList.toggle('hidden', resultExit));
-  $('resMsg').textContent = seg.text;
-  $('resMsg').classList.toggle('hidden', !resultExit);
-  prizeEl.classList.toggle('exit', resultExit);
-  if (resultExit) prizeEl.textContent = 'SALIR DE LA RULETA';
+  // Sin premio en los 2 giros: solo título y nombre, sin recuadros (se cierra tocando la ventana)
+  $('resMsg').classList.add('hidden');
+  prizeEl.classList.toggle('hidden', resultExit);
   renderStatus();
   $('resultModal').classList.add('open');
 }
@@ -865,7 +864,7 @@ $('resPrize').onclick = () => {
   // No gira desde aquí: solo lleva al cliente a la ruleta para girar con "¡GIRAR LA RULETA!"
   setTimeout(() => $('wheelWrap').scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
 };
-$('resultModal').addEventListener('click', e => { if (e.target.id === 'resultModal') closeResult(); });
+$('resultModal').addEventListener('click', e => { if (e.target.id === 'resultModal' || resultExit) closeResult(); });
 
 /* ============================================================
    CONFETI (canvas de partículas)
