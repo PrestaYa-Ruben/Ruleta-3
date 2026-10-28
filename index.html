@@ -16,7 +16,7 @@
 /* ============================================================
    ICONO SVG + MANIFEST EMBEBIDO (Data URI)
    ============================================================ */
-const APP_VERSION = '1.9';
+const APP_VERSION = '2.2';
 const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
 
 function makeIconSVG(){
@@ -68,7 +68,7 @@ function makeIconSVG(){
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -88,13 +88,12 @@ function makeIconSVG(){
       repeating-conic-gradient(from 0deg at 50% 38%, rgba(255,255,255,.035) 0 10deg, transparent 10deg 20deg),
       linear-gradient(180deg, var(--bg1), var(--bg2));
     background-attachment: fixed;
-    color:#fff; overflow-x:hidden;
+    color:#fff; overflow-x:hidden; font-weight:400;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
   }
   .title{
-    font-weight:800; letter-spacing:.5px; line-height:1;
-    background:linear-gradient(180deg,#fff2b8,#fac005 60%,#e0a800);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    filter:drop-shadow(0 2px 0 rgba(0,0,0,.35));
+    font-weight:700; letter-spacing:.3px; line-height:1;
+    color:var(--yellow); text-shadow:0 1px 2px rgba(0,0,0,.3);
   }
   .chip{ background:rgba(7,159,160,.25); border:1px solid rgba(159,216,197,.55); border-radius:999px; }
   .icon-btn{
@@ -134,14 +133,12 @@ function makeIconSVG(){
     background:radial-gradient(circle at 35% 30%, #ffffff, #f1f1f1 60%, #d9d9d9);
     border:2px solid #9e9e9e;
     box-shadow:0 0 0 3px #fff, 0 0 0 6px #8a8a8a, 0 0 0 7px #c7c7c7, 0 5px 12px rgba(0,0,0,.45);
-    color:#b71c1c; font-weight:800; font-size:clamp(10px,2.9vw,14px); letter-spacing:.3px;
-    transition:transform .15s;
+    color:#b71c1c; font-weight:700; font-size:clamp(9px,2.6vw,12px); letter-spacing:0;
+    display:grid; place-items:center; pointer-events:none; user-select:none;
   }
-  #hubBtn:not(:disabled):active{ transform:translate(-50%,-50%) scale(.93); }
-  #hubBtn:disabled{ color:#9e9e9e; }
 
   .spin-btn{
-    font-weight:800; font-size:1.25rem; letter-spacing:.5px; color:#fff;
+    font-weight:700; font-size:1.25rem; letter-spacing:.3px; color:#fff;
     padding:.85rem 2.2rem; border-radius:999px;
     background:linear-gradient(180deg,#ef5354,#dc2e2f 55%,#a81f20);
     box-shadow:0 6px 0 #6e1314, 0 12px 24px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.35);
@@ -150,7 +147,7 @@ function makeIconSVG(){
   .spin-btn:not(:disabled):active{ transform:translateY(5px); box-shadow:0 1px 0 #6e1314, 0 6px 12px rgba(0,0,0,.4); }
   .spin-btn:disabled{ filter:grayscale(.85) brightness(.75); }
   .pulse:not(:disabled){ animation:pulse 1.8s ease-in-out infinite; }
-  @keyframes pulse{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.05) } }
+  @keyframes pulse{ 0%,100%{ filter:brightness(1) } 50%{ filter:brightness(1.15) } }
 
   /* ---------- Modales ---------- */
   .modal{
@@ -170,7 +167,7 @@ function makeIconSVG(){
   .prize-box{
     margin:14px 0 8px; padding:14px 12px; border-radius:18px;
     background:linear-gradient(180deg,#e5494a,#dc2e2f 50%,#b02223); color:#fff;
-    font-weight:800; font-size:1.6rem; line-height:1.1;
+    font-weight:700; font-size:1.55rem; line-height:1.15;
     box-shadow:inset 0 2px 0 rgba(255,255,255,.25), 0 6px 14px rgba(220,46,47,.35);
   }
   .prize-btn{ width:100%; border:none; cursor:pointer; transition:transform .12s, filter .2s; animation:pulse 1.8s ease-in-out infinite; }
@@ -179,7 +176,7 @@ function makeIconSVG(){
   .prize-box.wa{ background:linear-gradient(180deg,#0bb8b9,#079fa0 55%,#05787a); font-size:clamp(.95rem,4.3vw,1.15rem); white-space:nowrap; padding-left:8px; padding-right:8px; }
   .prize-box.exit{ background:linear-gradient(180deg,#0a5a80,#023852); font-size:1.3rem; animation:none; }
   .bye{ position:fixed; inset:0; z-index:80; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; background:linear-gradient(180deg,var(--bg1),var(--bg2)); }
-  .btn{ border-radius:14px; padding:.75rem 1rem; font-weight:700; width:100%; transition:transform .1s; }
+  .btn{ border-radius:14px; padding:.75rem 1rem; font-weight:600; width:100%; transition:transform .1s; }
   .btn:active{ transform:scale(.97); }
   .btn-wa{ background:var(--teal); color:#fff; }
   .btn-dark{ background:var(--navy); color:#fff; }
@@ -196,7 +193,7 @@ function makeIconSVG(){
   .card{ background:#fff; border-radius:20px; padding:16px; box-shadow:0 2px 10px rgba(2,56,82,.08); }
   .field{ width:100%; border:2px solid #bfe5d8; border-radius:12px; padding:.65rem .8rem; font-size:1rem; background:#fff; color:var(--navy); }
   .field:focus{ outline:none; border-color:var(--teal); }
-  .label{ font-size:.8rem; font-weight:700; color:#3e6f82; margin-bottom:4px; display:block; }
+  .label{ font-size:.8rem; font-weight:600; color:#3e6f82; margin-bottom:4px; display:block; }
 
   .notice{
     border-radius:20px; padding:16px; text-align:center;
@@ -212,25 +209,27 @@ function makeIconSVG(){
     border-radius:22px; padding:16px; background:linear-gradient(180deg,rgba(7,159,160,.35),rgba(2,56,82,.85));
     border:2px solid var(--gold); box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.15);
   }
-  .acc-total{ background:var(--gold); color:var(--navy); font-weight:800; border-radius:999px; padding:.15rem .8rem; font-size:1rem; white-space:nowrap; }
-  .acc-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:.55rem .8rem; border-radius:14px; background:rgba(255,255,255,.08); font-weight:700; }
+  .acc-total{ background:var(--gold); color:var(--navy); font-weight:700; border-radius:999px; padding:.15rem .8rem; font-size:1rem; white-space:nowrap; }
+  .acc-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:.55rem .8rem; border-radius:14px; background:rgba(255,255,255,.08); font-weight:600; }
   .acc-row.win{ background:rgba(250,192,5,.18); border:1px solid rgba(250,192,5,.7); color:#ffe58a; }
-  .acc-row.pending{ opacity:.55; font-weight:600; }
+  .acc-row.pending{ opacity:.6; font-weight:500; }
   .send-box{
     border-radius:22px; padding:18px 16px; text-align:center;
     background:linear-gradient(180deg,#2bd96b,#1fae55 55%,#128c46);
     border:3px solid #b9f6ca; box-shadow:0 10px 26px rgba(0,0,0,.35), 0 0 0 4px rgba(37,211,102,.25);
     animation:popIn .45s cubic-bezier(.2,1.4,.4,1);
   }
-  .send-box .send-btn{ background:#fff; color:#128c46; font-weight:800; box-shadow:0 5px 0 #0b6b34, 0 8px 16px rgba(0,0,0,.25); }
+  .send-box .send-btn{ background:#fff; color:#128c46; font-weight:700; box-shadow:0 5px 0 #0b6b34, 0 8px 16px rgba(0,0,0,.25); }
   .send-box .send-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 #0b6b34; }
   .send-box.flash{ animation:popIn .45s cubic-bezier(.2,1.4,.4,1), glow 1.2s ease-in-out 3; }
   @keyframes glow{ 0%,100%{ box-shadow:0 10px 26px rgba(0,0,0,.35), 0 0 0 4px rgba(37,211,102,.25) } 50%{ box-shadow:0 10px 26px rgba(0,0,0,.35), 0 0 0 12px rgba(37,211,102,.55) } }
   @keyframes popIn{ from{ transform:scale(.85); opacity:0 } to{ transform:scale(1); opacity:1 } }
   .switch{ position:relative; width:52px; height:30px; flex:none; border-radius:999px; background:#bcd9cf; transition:background .2s; }
   .switch::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.25); transition:transform .2s; }
-  #infToggle:checked + .switch{ background:var(--teal); }
-  #infToggle:checked + .switch::after{ transform:translateX(22px); }
+  #infToggle:checked + .switch, #pinToggle:checked + .switch{ background:var(--teal); }
+  #infToggle:checked + .switch::after, #pinToggle:checked + .switch::after{ transform:translateX(22px); }
+  .brand .b-presta{ color:#ffffff; }
+  .brand .b-ya{ color:#2bd96b; }
   #confetti{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; }
 </style>
 </head>
@@ -243,7 +242,7 @@ function makeIconSVG(){
   <!-- Encabezado -->
   <header class="w-full flex items-start justify-between gap-3">
     <div>
-      <h1 class="title text-4xl sm:text-5xl">PrestaYa</h1>
+      <h1 class="title brand text-4xl sm:text-5xl"><span class="b-presta">Presta</span><span class="b-ya">Ya</span></h1>
       <p class="text-sm text-white/75 mt-1">¡Gira la ruleta y gana boletas extra!</p>
     </div>
     <div class="flex gap-2 shrink-0">
@@ -257,7 +256,7 @@ function makeIconSVG(){
   </header>
 
   <!-- Estado del participante -->
-  <div id="statusChip" class="chip mt-4 px-4 py-1.5 text-base font-bold"></div>
+  <div id="statusChip" class="chip mt-4 px-4 py-1.5 text-base font-semibold"></div>
   <p id="playerName" class="text-sm text-white/75 mt-2 hidden"></p>
 
   <!-- Ruleta -->
@@ -274,7 +273,7 @@ function makeIconSVG(){
         <path d="M4 10 Q4 4 10 5 L92 30 Q98 35 92 40 L10 65 Q4 66 4 60 Z" fill="url(#pg)" stroke="#7f0d0d" stroke-width="5" stroke-linejoin="round"/>
         <circle cx="22" cy="35" r="8" fill="#b71c1c" stroke="#fff" stroke-width="3"/>
       </svg>
-      <button id="hubBtn" aria-label="Girar la ruleta">GIRAR</button>
+      <div id="hubBtn" aria-hidden="true"><span><span style="color:#023852">Presta</span><span style="color:#16a34a">Ya</span></span></div>
     </div>
   </section>
 
@@ -286,7 +285,7 @@ function makeIconSVG(){
   <!-- Premios acumulados -->
   <section id="accBox" class="acc w-full mt-6">
     <div class="flex items-center justify-between gap-2">
-      <h2 class="font-extrabold text-lg">🎁 Premios acumulados</h2>
+      <h2 class="font-bold text-lg">🎁 Premios acumulados</h2>
       <span id="accTotal" class="acc-total">0 boletas</span>
     </div>
     <div id="accList" class="mt-3 flex flex-col gap-2"></div>
@@ -294,9 +293,9 @@ function makeIconSVG(){
   </section>
 
   <!-- Enviar resultados (solo si ganó, al terminar los giros) -->
-  <section id="sendBox" class="send-box w-full mt-5 hidden">
+  <section id="sendBox" class="send-box w-full mt-5 hidden" style="display:none">
     <div class="text-4xl leading-none">🎉</div>
-    <p id="sendTitle" class="text-xl font-extrabold mt-2"></p>
+    <p id="sendTitle" class="text-xl font-bold mt-2"></p>
     <p class="text-sm text-white/85 mt-1">Envía tus resultados por WhatsApp para reclamar tu premio.</p>
     <button id="sendBtn" class="btn send-btn mt-4 text-lg flex items-center justify-center gap-2">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
@@ -311,12 +310,12 @@ function makeIconSVG(){
 <div id="resultModal" class="modal" role="dialog" aria-modal="true">
   <div class="modal-card">
     <div id="resIcon" class="text-6xl leading-none">🎉</div>
-    <h2 id="resTitle" class="text-3xl font-extrabold mt-2" style="color:#dc2e2f"></h2>
+    <h2 id="resTitle" class="text-3xl font-bold mt-2" style="color:#dc2e2f"></h2>
     <p id="resSub" class="text-base text-[#2c5d73] mt-1"></p>
     <div id="resMsg" class="prize-box soft hidden"></div>
     <button id="resPrize" class="prize-box prize-btn w-full"></button>
     <p id="resCode" class="text-sm font-semibold text-[#2c5d73] mt-1"></p>
-    <p id="resLeft" class="text-base font-bold mt-3" style="color:#079fa0"></p>
+    <p id="resLeft" class="text-base font-semibold mt-3" style="color:#079fa0"></p>
     <button id="resClaim" class="btn btn-wa mt-4 hidden">Enviar resultados por WhatsApp</button>
   </div>
 </div>
@@ -325,13 +324,13 @@ function makeIconSVG(){
 <div id="adminSheet" class="sheet" aria-hidden="true">
   <div class="max-w-md mx-auto px-4 pb-10" style="padding-top:max(16px, env(safe-area-inset-top));">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-2xl font-extrabold">Panel de administración</h2>
-      <button id="adminClose" class="w-10 h-10 rounded-xl bg-white shadow text-xl font-bold" aria-label="Cerrar">✕</button>
+      <h2 class="text-2xl font-bold">Panel de administración</h2>
+      <button id="adminClose" class="w-10 h-10 rounded-xl bg-white shadow text-xl font-semibold" aria-label="Cerrar">✕</button>
     </div>
 
     <!-- PIN -->
     <div id="pinView" class="card text-center">
-      <p class="font-bold text-lg">Ingresa tu PIN</p>
+      <p class="font-semibold text-lg">Ingresa tu PIN</p>
       <p class="text-sm text-[#3e6f82] mb-3">PIN inicial: 1234 (cámbialo en Ajustes)</p>
       <input id="pinInput" type="password" inputmode="numeric" maxlength="8" class="field text-center text-2xl tracking-[.4em]" placeholder="••••">
       <button id="pinOk" class="btn btn-red mt-3">Entrar</button>
@@ -341,7 +340,7 @@ function makeIconSVG(){
     <div id="adminView" class="hidden flex flex-col gap-4">
 
       <div class="card">
-        <h3 class="font-extrabold text-lg mb-3">Generar enlace por cliente</h3>
+        <h3 class="font-bold text-lg mb-3">Generar enlace por cliente</h3>
         <label class="label" for="gName">Nombre del cliente *</label>
         <input id="gName" class="field" placeholder="Ej: Juan Pérez" autocomplete="off">
         <div class="grid grid-cols-[1fr_auto] gap-2 mt-3 items-end">
@@ -367,7 +366,7 @@ function makeIconSVG(){
 
       <div class="card">
         <div class="flex items-center justify-between mb-2">
-          <h3 class="font-extrabold text-lg">Enlaces generados</h3>
+          <h3 class="font-bold text-lg">Enlaces generados</h3>
           <span id="histCount" class="text-sm text-[#3e6f82]"></span>
         </div>
         <input id="histSearch" class="field mb-3" placeholder="Buscar por nombre o ID">
@@ -375,18 +374,26 @@ function makeIconSVG(){
       </div>
 
       <div class="card">
-        <h3 class="font-extrabold text-lg mb-1">Verificar premio</h3>
+        <h3 class="font-bold text-lg mb-1">Verificar premio</h3>
         <p class="text-sm text-[#3e6f82] mb-3">Cuando un cliente reclame, pide su ID y el código de verificación que le mostró su cajón de premios.</p>
         <div class="grid grid-cols-2 gap-2">
           <input id="vId" class="field" placeholder="ID">
           <input id="vCode" class="field uppercase" placeholder="Código">
         </div>
         <button id="vCheck" class="btn btn-dark mt-3">Verificar</button>
-        <p id="vResult" class="mt-3 font-bold text-center"></p>
+        <p id="vResult" class="mt-3 font-semibold text-center"></p>
       </div>
 
       <div class="card">
-        <h3 class="font-extrabold text-lg mb-3">Ajustes</h3>
+        <h3 class="font-bold text-lg mb-3">Ajustes</h3>
+        <label class="flex items-center justify-between gap-3 mb-4 p-3 rounded-xl bg-[#dff3ec] cursor-pointer">
+          <span>
+            <span class="block font-semibold">🔒 Pedir PIN para entrar al panel</span>
+            <span class="block text-xs text-[#3e6f82]">Apagado: entras directo con ⚙. Encendido: pide el PIN (inicial 1234).</span>
+          </span>
+          <input id="pinToggle" type="checkbox" class="sr-only">
+          <span class="switch" aria-hidden="true"></span>
+        </label>
         <label class="label" for="newPin">Nuevo PIN</label>
         <div class="grid grid-cols-[1fr_auto] gap-2">
           <input id="newPin" type="password" inputmode="numeric" maxlength="8" class="field" placeholder="4 a 8 dígitos">
@@ -394,7 +401,7 @@ function makeIconSVG(){
         </div>
         <label class="flex items-center justify-between gap-3 mt-4 p-3 rounded-xl bg-[#dff3ec] cursor-pointer">
           <span>
-            <span class="block font-bold">♾️ Giros de prueba infinitos</span>
+            <span class="block font-semibold">♾️ Giros de prueba infinitos</span>
             <span class="block text-xs text-[#3e6f82]">Solo en la vista sin enlace de este dispositivo. Los enlaces de clientes siguen con 2 giros.</span>
           </span>
           <input id="infToggle" type="checkbox" class="sr-only">
@@ -543,23 +550,30 @@ function renderStatus(){
   pn.classList.toggle('hidden', MODE !== 'client');
 
   const blocked = spinning || left === 0;
-  $('spinBtn').disabled = blocked; $('hubBtn').disabled = blocked;
+  $('spinBtn').disabled = blocked;
   $('spinBtn').textContent = left === 0 ? 'SIN GIROS' : '¡GIRAR LA RULETA!';
   $('btnAdmin').classList.toggle('hidden', !(MODE === 'demo' || qs.has('admin')));
 
   const n = $('notice');
   n.innerHTML = '';
   if (MODE === 'invalid') {
-    n.innerHTML = '<p class="text-lg font-extrabold">Este enlace no es válido</p><p class="text-sm text-white/80 mt-1">Puede estar incompleto o haber sido modificado. Pide un nuevo enlace a quien te lo envió.</p>';
+    n.innerHTML = '<p class="text-lg font-bold">Este enlace no es válido</p><p class="text-sm text-white/80 mt-1">Puede estar incompleto o haber sido modificado. Pide un nuevo enlace a quien te lo envió.</p>';
     n.classList.remove('hidden');
   } else n.classList.add('hidden');
 
   renderAcc();
 }
 
+// El recuadro verde de WhatsApp solo existe si hay al menos un giro premiado
+const hasWon = () => getSpins().some(r => r && r.prize && (r.boletas || 0) > 0);
+function showSend(show){
+  const s = $('sendBox');
+  s.classList.toggle('hidden', !show);
+  s.style.display = show ? '' : 'none';
+}
 function renderAcc(){
   const box = $('accBox');
-  if (MODE === 'invalid') { box.classList.add('hidden'); return; }
+  if (MODE === 'invalid') { box.classList.add('hidden'); showSend(false); return; }
   box.classList.remove('hidden');
   const spins = getSpins(), left = remaining(), tot = totalBoletas(spins);
   const list = $('accList'); list.innerHTML = '';
@@ -577,12 +591,12 @@ function renderAcc(){
   $('accTotal').textContent = boletasTxt(spinning ? totalBoletas(spins.slice(0, -1)) : tot);
 
   const hint = $('accHint'), send = $('sendBox');
-  hint.classList.add('hidden'); send.classList.add('hidden');
+  hint.classList.add('hidden'); showSend(false);
   if (spinning) return;
   if (isInfinite()) {
     if (spins.length) {
       hint.innerHTML = '';
-      const b = document.createElement('button'); b.className = 'underline font-bold'; b.textContent = 'Reiniciar giros de prueba';
+      const b = document.createElement('button'); b.className = 'underline font-semibold'; b.textContent = 'Reiniciar giros de prueba';
       b.onclick = () => { demoSpins = []; renderStatus(); };
       hint.append(`${spins.length} giro${spins.length === 1 ? '' : 's'} de prueba · `, b);
       hint.classList.remove('hidden');
@@ -593,7 +607,7 @@ function renderAcc(){
   else if (tot > 0 && left === 0) {
     if (MODE === 'client') { hint.textContent = `Código de verificación: ${totalCode(tot)}`; hint.classList.remove('hidden'); }
     $('sendTitle').textContent = `¡Ganaste ${boletasTxt(tot)}!`;
-    send.classList.remove('hidden');
+    showSend(hasWon());
   } else if (tot === 0 && left === 0) { hint.textContent = 'Esta vez no ganaste boletas. ¡Suerte en la próxima!'; hint.classList.remove('hidden'); }
 }
 
@@ -673,24 +687,19 @@ function drawWheel(){
     const stroke = s.dark ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.4)';
     c.textBaseline = 'middle'; c.lineJoin = 'round';
 
-    // Número (parte exterior)
-    const nf = r * 0.11;
-    c.font = `800 ${nf}px ${FONT}`; c.textAlign = 'center';
-    c.lineWidth = nf * 0.2; c.strokeStyle = stroke; c.strokeText(String(s.n), -r * 0.87, 0);
-    c.fillStyle = fill; c.fillText(String(s.n), -r * 0.87, 0);
-
-    // Premio orientado radialmente hacia el centro
+    // Premio orientado radialmente hacia el centro (sin números: más espacio para el texto)
     const lines = splitLines(s.text);
-    const maxW = r * 0.5;
-    let fs = r * (lines.length > 1 ? 0.072 : 0.085);
-    c.font = `800 ${fs}px ${FONT}`;
+    const x0 = -r * 0.92;                                   // empieza junto al aro
+    const maxW = r * (lines.length > 1 ? 0.58 : 0.66);      // termina antes del centro
+    let fs = r * (lines.length > 1 ? 0.092 : 0.11);
+    c.font = `700 ${fs}px ${FONT}`;
     const widest = Math.max(...lines.map(l => c.measureText(l).width));
-    if (widest > maxW) { fs *= maxW / widest; c.font = `800 ${fs}px ${FONT}`; }
+    if (widest > maxW) { fs *= maxW / widest; c.font = `700 ${fs}px ${FONT}`; }
     c.textAlign = 'left';
     lines.forEach((l, k) => {
       const y = (k - (lines.length - 1) / 2) * fs * 1.02;
-      c.lineWidth = fs * 0.2; c.strokeStyle = stroke; c.strokeText(l, -r * 0.765, y);
-      c.fillStyle = fill; c.fillText(l, -r * 0.765, y);
+      c.lineWidth = fs * 0.14; c.strokeStyle = stroke; c.strokeText(l, x0, y);
+      c.fillStyle = fill; c.fillText(l, x0, y);
     });
     c.restore();
   });
@@ -747,7 +756,7 @@ function spin(){
   addSpin(record);
 
   spinning = true;
-  $('spinBtn').disabled = true; $('hubBtn').disabled = true;
+  $('spinBtn').disabled = true;
   $('spinBtn').classList.remove('pulse');
   renderAcc();
 
@@ -777,7 +786,7 @@ function finish(seg, record){
   spinning = false;
   $('spinBtn').classList.add('pulse');
   // Último giro con premio acumulado: sin ventana, se lleva al cliente al recuadro verde de WhatsApp
-  if (!isInfinite() && remaining() === 0 && totalBoletas(getSpins()) > 0) {
+  if (!isInfinite() && remaining() === 0 && hasWon()) {
     renderStatus();
     if (seg.prize) { launchConfetti(); playWin(); } else playSoft();
     const box = $('sendBox');
@@ -852,9 +861,9 @@ function exitRoulette(){
 $('resPrize').onclick = () => {
   if (resultExit) return exitRoulette();
   if (resultWA) return claimWA();
-  const more = remaining() > 0;
   closeResult();
-  if (more) setTimeout(spin, 350);
+  // No gira desde aquí: solo lleva al cliente a la ruleta para girar con "¡GIRAR LA RULETA!"
+  setTimeout(() => $('wheelWrap').scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
 };
 $('resultModal').addEventListener('click', e => { if (e.target.id === 'resultModal') closeResult(); });
 
@@ -901,9 +910,10 @@ function stepConfetti(){
    PANEL DE ADMINISTRACIÓN
    ============================================================ */
 const getPin = () => store.get('rp_pin', CONFIG.DEFAULT_PIN);
+const pinEnabled = () => store.get('rp_pin_on', false) === true;
 function openAdmin(){
   $('adminSheet').classList.add('open'); $('adminSheet').setAttribute('aria-hidden', 'false');
-  let ok = false; try { ok = sessionStorage.getItem('rp_admin') === '1'; } catch {}
+  let ok = !pinEnabled(); try { ok = ok || sessionStorage.getItem('rp_admin') === '1'; } catch {}
   showAdmin(ok);
 }
 function showAdmin(ok){
@@ -968,10 +978,10 @@ function renderHistory(){
     const row = document.createElement('div');
     row.className = 'flex items-center gap-2 border border-[#cfe9e0] rounded-xl p-2';
     const info = document.createElement('div'); info.className = 'flex-1 min-w-0';
-    const n = document.createElement('p'); n.className = 'font-bold truncate'; n.textContent = h.cliente;
+    const n = document.createElement('p'); n.className = 'font-semibold truncate'; n.textContent = h.cliente;
     const d = document.createElement('p'); d.className = 'text-xs text-[#4b7a8c]'; d.textContent = `ID ${h.id} · ${fmtDate(h.fecha)}`;
     info.append(n, d);
-    const mk = (label, cls, fn) => { const b = document.createElement('button'); b.className = `text-xs font-bold px-2.5 py-2 rounded-lg ${cls}`; b.textContent = label; b.onclick = fn; return b; };
+    const mk = (label, cls, fn) => { const b = document.createElement('button'); b.className = `text-xs font-semibold px-2.5 py-2 rounded-lg ${cls}`; b.textContent = label; b.onclick = fn; return b; };
     row.append(info,
       mk('Copiar', 'bg-[#023852] text-white', () => copyText(h.link)),
       mk('WA', 'bg-[#079fa0] text-white', () => openWA(h.phone, inviteText(h.cliente, h.link))),
@@ -998,6 +1008,11 @@ $('savePin').onclick = () => {
   const p = $('newPin').value.trim();
   if (!/^\d{4,8}$/.test(p)) return toast('El PIN debe tener de 4 a 8 dígitos');
   store.set('rp_pin', p); $('newPin').value = ''; toast('PIN actualizado');
+};
+$('pinToggle').checked = pinEnabled();
+$('pinToggle').onchange = e => {
+  store.set('rp_pin_on', e.target.checked);
+  toast(e.target.checked ? `PIN activado (tu PIN: ${getPin()})` : 'PIN desactivado: entrarás sin PIN');
 };
 $('infToggle').checked = store.get('rp_infinite', false) === true;
 $('infToggle').onchange = e => {
@@ -1033,7 +1048,6 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
    INICIO
    ============================================================ */
 $('spinBtn').onclick = spin;
-$('hubBtn').onclick = spin;
 let resizeT;
 window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(drawWheel, 120); });
 renderStatus();
