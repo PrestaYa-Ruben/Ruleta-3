@@ -16,7 +16,7 @@
 /* ============================================================
    ICONO SVG + MANIFEST EMBEBIDO (Data URI)
    ============================================================ */
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
 
 function makeIconSVG(){
@@ -228,17 +228,22 @@ function makeIconSVG(){
   .switch::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.25); transition:transform .2s; }
   #infToggle:checked + .switch, #pinToggle:checked + .switch{ background:var(--teal); }
   #infToggle:checked + .switch::after, #pinToggle:checked + .switch::after{ transform:translateX(22px); }
-  .seg-head, .seg-row{ display:grid; grid-template-columns:40px 1fr 64px 36px; gap:6px; align-items:center; }
+  .seg-head, .seg-row{ display:grid; grid-template-columns:36px minmax(0,1fr) 54px 62px 34px; gap:5px; align-items:center; }
   .seg-head{ font-size:.72rem; font-weight:600; color:#3e6f82; margin-bottom:4px; }
-  .seg-head span:nth-child(3){ text-align:center; }
-  .seg-row input[type=color]{ width:40px; height:40px; padding:0; border:2px solid #bfe5d8; border-radius:10px; background:none; cursor:pointer; }
+  .seg-head span:nth-child(3), .seg-head span:nth-child(4){ text-align:center; }
+  .seg-row input[type=color]{ width:36px; height:40px; padding:0; border:2px solid #bfe5d8; border-radius:10px; background:none; cursor:pointer; }
   .seg-row input[type=color]::-webkit-color-swatch-wrapper{ padding:2px; }
   .seg-row input[type=color]::-webkit-color-swatch{ border:none; border-radius:7px; }
   .seg-row .field{ min-width:0; width:100%; box-sizing:border-box; padding:.5rem .6rem; font-size:.9rem; text-transform:uppercase; }
   .seg-row .num{ text-align:center; padding:.5rem .2rem; text-transform:none; }
   .seg-row.win .num{ border-color:var(--yellow); background:#fff8db; font-weight:600; }
-  .seg-del{ width:36px; height:40px; border:none; border-radius:10px; background:#fde4e4; color:var(--red); font-weight:600; }
+  .seg-del{ width:34px; height:40px; border:none; border-radius:10px; background:#fde4e4; color:var(--red); font-weight:600; }
   .seg-del:disabled{ opacity:.35; }
+  .seg-row .prob{ border-color:#9fd8c5; background:#f2fbf8; }
+  .seg-row .prob.zero{ background:#f3f3f3; color:#9a9a9a; }
+  .prob-bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; padding:.55rem .75rem; border-radius:12px; background:#dff3ec; font-size:.85rem; }
+  .prob-bar.bad{ background:#fde4e4; color:#a11d1e; }
+  .prob-bar button{ font-weight:600; color:var(--teal); text-decoration:underline; white-space:nowrap; background:none; border:none; }
   .brand .b-presta{ color:#ffffff; }
   .brand .b-ya{ color:#2bd96b; }
   #confetti{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; }
@@ -400,9 +405,10 @@ function makeIconSVG(){
           <h3 class="font-bold text-lg">🎡 Segmentos de la ruleta</h3>
           <span id="segCount" class="text-sm text-[#3e6f82]"></span>
         </div>
-        <p class="text-xs text-[#3e6f82] mb-3">Escribe el texto de cada segmento y cuántas boletas da (0 = sin premio). Mínimo 4, máximo 16 segmentos.</p>
-        <div class="seg-head"><span></span><span>Texto</span><span>Boletas</span><span></span></div>
+        <p class="text-xs text-[#3e6f82] mb-3">Escribe el texto de cada segmento, cuántas boletas da (0 = sin premio) y su probabilidad de salir en %. Con 0 % ese segmento nunca sale. Mínimo 4, máximo 16 segmentos.</p>
+        <div class="seg-head"><span></span><span>Texto</span><span>Boletas</span><span>Prob. %</span><span></span></div>
         <div id="segList" class="flex flex-col gap-2"></div>
+        <div id="probBar" class="prob-bar"><span id="probTotal"></span><button id="probEqual" type="button">Repartir igual</button></div>
         <button id="segAdd" class="btn btn-ghost mt-3">+ Agregar segmento</button>
         <div class="grid grid-cols-2 gap-2 mt-2">
           <button id="segReset" class="btn btn-ghost">Restaurar originales</button>
@@ -493,12 +499,20 @@ function cleanSegments(list){
   const out = list.slice(0, SEG_MAX).map((s, i) => ({
     text: String(s.text || '').replace(/\./g, '').replace(/\s+/g, ' ').trim().toUpperCase().slice(0, TEXT_MAX),
     boletas: Math.max(0, Math.min(BOLETAS_MAX, parseInt(s.boletas, 10) || 0)),
-    color: /^#[0-9a-f]{6}$/i.test(s.color || '') ? s.color.toUpperCase() : WHEEL_COLORS[i % WHEEL_COLORS.length]
+    color: /^#[0-9a-f]{6}$/i.test(s.color || '') ? s.color.toUpperCase() : WHEEL_COLORS[i % WHEEL_COLORS.length],
+    prob: Number.isFinite(parseFloat(s.prob)) ? Math.round(Math.max(0, Math.min(100, parseFloat(s.prob))) * 10) / 10 : null
   })).filter(s => s.text);
-  return out.length >= SEG_MIN ? out : null;
+  if (out.length < SEG_MIN) return null;
+  // Sin probabilidades (o todas iguales) = todos los segmentos tienen la misma probabilidad
+  const eq = equalShare(out.length);
+  if (out.every(s => s.prob === null) || out.every(s => s.prob === out[0].prob)) out.forEach(s => s.prob = eq);
+  else out.forEach(s => { if (s.prob === null) s.prob = eq; });
+  return out;
 }
+const equalShare = n => Math.round(1000 / n) / 10;
+const isEqualProb = list => list.every(s => s.prob === list[0].prob);
 function setSegments(list){
-  SEGMENTS = (cleanSegments(list) || DEFAULT_SEGMENTS).map((s, i) => ({
+  SEGMENTS = (cleanSegments(list) || cleanSegments(DEFAULT_SEGMENTS)).map((s, i) => ({
     ...s, n: i + 1, prize: s.boletas > 0, dark: luminance(s.color) > 0.45
   }));
   SEG = 360 / SEGMENTS.length;
@@ -507,7 +521,7 @@ const sameAsDefault = list => JSON.stringify(cleanSegments(list)) === JSON.strin
 
 /* ---------- Ruleta dentro del enlace: formato corto ----------
    Cada segmento ocupa 2 caracteres si usa una frase conocida y su color de siempre:
-   [frase][boletas]  ·  texto propio: "-" + texto + "."  ·  color distinto: "." + 6 hex
+   [frase][boletas]  ·  texto propio: "-" + texto + "."  ·  probabilidad: "!" + 2 caracteres  ·  color distinto: "." + 6 hex
    (sin "*", "_" sueltos ni "~" para que WhatsApp no los tome como formato)
    ¡No cambies el orden de PHRASES! Solo agrega frases nuevas al final.                          */
 const PHRASES = [
@@ -522,10 +536,12 @@ const b64u = s => { let bin = ''; new TextEncoder().encode(s).forEach(b => bin +
 const unb64u = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
 
 function encodeSegments(list){
-  return '2' + cleanSegments(list).map((s, i) => {
+  const clean = cleanSegments(list), withProb = !isEqualProb(clean);
+  return '2' + clean.map((s, i) => {
     const k = PHRASES.indexOf(s.text);
     let out = k >= 0 && k < B36.length ? B36[k] : '-' + s.text + '.';
     out += B36[s.boletas];
+    if (withProb) { const v = Math.round(s.prob * 10); out += '!' + B36[Math.floor(v / 62)] + B36[v % 62]; }
     if (s.color !== WHEEL_COLORS[i % WHEEL_COLORS.length].toUpperCase()) out += '.' + s.color.slice(1).toLowerCase();
     return out;
   }).join('');
@@ -542,9 +558,11 @@ function decodeSegments(str){
       if (str[p] === '-') { let e = str.indexOf('.', p); if (e < 0) e = str.length; text = str.slice(p + 1, e); p = e + 1; }
       else { text = PHRASES[B36.indexOf(str[p])]; p++; }
       const boletas = B36.indexOf(str[p]); p++;
+      let prob = null;
+      if (str[p] === '!') { prob = (B36.indexOf(str[p + 1]) * 62 + B36.indexOf(str[p + 2])) / 10; p += 3; }
       let color = WHEEL_COLORS[segs.length % WHEEL_COLORS.length];
       if (str[p] === '.') { color = '#' + str.slice(p + 1, p + 7); p += 7; }
-      segs.push({ text, boletas, color });
+      segs.push({ text, boletas, color, prob });
     }
     return cleanSegments(segs);
   } catch { return null; }
@@ -857,12 +875,23 @@ function ease(t){
 const pointer = $('pointer');
 function kickPointer(){ pointer.classList.remove('kick'); void pointer.getBoundingClientRect(); pointer.classList.add('kick'); }
 
+// Elige el segmento según su probabilidad (si todas son iguales, sorteo parejo)
+function pickSegment(){
+  if (isEqualProb(SEGMENTS)) return randInt(SEGMENTS.length);
+  const total = SEGMENTS.reduce((a, s) => a + s.prob, 0);
+  if (total <= 0) return randInt(SEGMENTS.length);
+  const SCALE = 100000;
+  let x = randInt(SCALE) / SCALE * total;
+  for (let i = 0; i < SEGMENTS.length; i++) { x -= SEGMENTS[i].prob; if (x < 0 && SEGMENTS[i].prob > 0) return i; }
+  for (let i = SEGMENTS.length - 1; i >= 0; i--) if (SEGMENTS[i].prob > 0) return i;
+  return 0;
+}
 function spin(){
   if (spinning) return;
   if (remaining() <= 0) { renderStatus(); return; }
   initAudio();
 
-  const idx = randInt(SEGMENTS.length);
+  const idx = pickSegment();
   const seg = SEGMENTS[idx];
   // Se registra ANTES de animar: recargar la página durante el giro no devuelve el giro
   const record = { premio: seg.text, numero: seg.n, prize: seg.prize, boletas: seg.boletas || 0, fecha: new Date().toISOString(), cliente: P.cliente };
@@ -1123,7 +1152,21 @@ $('savePin').onclick = () => {
 };
 /* ---------- Editor de segmentos ---------- */
 let segDraft = [];
-function loadSegDraft(){ segDraft = SEGMENTS.map(s => ({ text: s.text, boletas: s.boletas, color: s.color })); renderSegEditor(); }
+function loadSegDraft(){ segDraft = SEGMENTS.map(s => ({ text: s.text, boletas: s.boletas, color: s.color, prob: s.prob })); renderSegEditor(); }
+const draftEqual = () => segDraft.length > 0 && segDraft.every(s => s.prob === segDraft[0].prob);
+function respread(){ const eq = equalShare(segDraft.length); segDraft.forEach(s => s.prob = eq); }
+function updateProbSummary(){
+  const total = Math.round(segDraft.reduce((a, s) => a + (s.prob || 0), 0) * 10) / 10;
+  const eq = draftEqual();
+  const win = total > 0 ? segDraft.filter(s => s.boletas > 0).reduce((a, s) => a + (s.prob || 0), 0) / total * 100 : 0;
+  const shown = eq ? 100 : total;
+  const ok = eq || Math.abs(total - 100) < 0.05;
+  $('probTotal').textContent = ok ? `Total ${shown} % ✓ · Probabilidad de ganar por giro: ${win.toFixed(1)} %`
+                                  : `Total ${total} % — al guardar se ajusta a 100 %`;
+  $('probBar').classList.toggle('bad', !ok);
+  const premios = segDraft.filter(s => s.boletas > 0).length;
+  $('segCount').textContent = `${segDraft.length} segmentos · ${premios} con premio`;
+}
 function renderSegEditor(){
   const list = $('segList'); list.innerHTML = '';
   segDraft.forEach((s, i) => {
@@ -1133,14 +1176,15 @@ function renderSegEditor(){
     const txt = document.createElement('input'); txt.className = 'field'; txt.maxLength = TEXT_MAX; txt.value = s.text; txt.placeholder = 'Texto del segmento';
     txt.oninput = e => { s.text = e.target.value; };
     const num = document.createElement('input'); num.className = 'field num'; num.type = 'number'; num.min = 0; num.max = BOLETAS_MAX; num.inputMode = 'numeric'; num.value = s.boletas;
-    num.oninput = e => { s.boletas = Math.max(0, Math.min(BOLETAS_MAX, parseInt(e.target.value, 10) || 0)); row.classList.toggle('win', s.boletas > 0); };
+    num.oninput = e => { s.boletas = Math.max(0, Math.min(BOLETAS_MAX, parseInt(e.target.value, 10) || 0)); row.classList.toggle('win', s.boletas > 0); updateProbSummary(); };
+    const pr = document.createElement('input'); pr.className = 'field num prob' + (s.prob === 0 ? ' zero' : ''); pr.type = 'number'; pr.min = 0; pr.max = 100; pr.step = 0.1; pr.inputMode = 'decimal'; pr.value = s.prob; pr.title = 'Probabilidad de que salga (%)';
+    pr.oninput = e => { const v = parseFloat(String(e.target.value).replace(',', '.')); s.prob = Number.isFinite(v) ? Math.round(Math.max(0, Math.min(100, v)) * 10) / 10 : 0; pr.classList.toggle('zero', s.prob === 0); updateProbSummary(); };
     const del = document.createElement('button'); del.className = 'seg-del'; del.textContent = '✕'; del.title = 'Quitar segmento';
     del.disabled = segDraft.length <= SEG_MIN;
-    del.onclick = () => { segDraft.splice(i, 1); renderSegEditor(); };
-    row.append(col, txt, num, del); list.append(row);
+    del.onclick = () => { const eq = draftEqual(); segDraft.splice(i, 1); if (eq) respread(); renderSegEditor(); };
+    row.append(col, txt, num, pr, del); list.append(row);
   });
-  const premios = segDraft.filter(s => s.boletas > 0).length;
-  $('segCount').textContent = `${segDraft.length} segmentos · ${premios} con premio`;
+  updateProbSummary();
   $('segAdd').disabled = segDraft.length >= SEG_MAX;
   const custom = store.get('rp_segments', null);
   $('segInfo').textContent = custom && !sameAsDefault(custom)
@@ -1149,11 +1193,14 @@ function renderSegEditor(){
 }
 $('segAdd').onclick = () => {
   if (segDraft.length >= SEG_MAX) return;
-  segDraft.push({ text: 'NUEVO PREMIO', boletas: 0, color: WHEEL_COLORS[segDraft.length % WHEEL_COLORS.length] });
+  const eq = draftEqual();
+  segDraft.push({ text: 'NUEVO PREMIO', boletas: 0, color: WHEEL_COLORS[segDraft.length % WHEEL_COLORS.length], prob: 0 });
+  if (eq) respread();
   renderSegEditor();
   const inputs = $('segList').querySelectorAll('.seg-row .field:not(.num)'); const last = inputs[inputs.length - 1];
   if (last) { last.focus(); last.select(); }
 };
+$('probEqual').onclick = () => { respread(); renderSegEditor(); toast('Probabilidades repartidas por igual'); };
 $('segReset').onclick = () => {
   if (!confirm('¿Volver a la ruleta original de 12 segmentos?')) return;
   store.del('rp_segments'); setSegments(null); demoSpins = []; drawWheel(); renderStatus(); loadSegDraft();
@@ -1162,12 +1209,22 @@ $('segReset').onclick = () => {
 $('segSave').onclick = () => {
   const empty = segDraft.findIndex(s => !String(s.text).trim());
   if (empty >= 0) return toast(`El segmento ${empty + 1} no tiene texto`);
-  const clean = cleanSegments(segDraft);
+  let clean = cleanSegments(segDraft), adjusted = false;
   if (!clean) return toast(`La ruleta necesita mínimo ${SEG_MIN} segmentos`);
+  const total = clean.reduce((a, s) => a + s.prob, 0);
+  if (total <= 0) return toast('Al menos un segmento debe tener probabilidad mayor a 0 %');
+  if (!isEqualProb(clean) && Math.abs(total - 100) >= 0.05) {
+    // Ajuste proporcional para que sumen 100 %
+    clean.forEach(s => s.prob = Math.round(s.prob / total * 1000) / 10);
+    const diff = Math.round((100 - clean.reduce((a, s) => a + s.prob, 0)) * 10) / 10;
+    const big = clean.reduce((m, s, i) => s.prob > clean[m].prob ? i : m, 0);
+    clean[big].prob = Math.round((clean[big].prob + diff) * 10) / 10;
+    adjusted = true;
+  }
   if (!clean.some(s => s.boletas > 0) && !confirm('Ningún segmento da boletas. ¿Guardar de todas formas?')) return;
   if (sameAsDefault(clean)) store.del('rp_segments'); else store.set('rp_segments', clean);
   setSegments(clean); demoSpins = []; drawWheel(); renderStatus(); loadSegDraft();
-  toast('Ruleta actualizada');
+  toast(adjusted ? 'Ruleta actualizada · probabilidades ajustadas a 100 %' : 'Ruleta actualizada');
 };
 
 $('pinToggle').checked = pinEnabled();
