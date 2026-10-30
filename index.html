@@ -16,7 +16,7 @@
 /* ============================================================
    ICONO SVG + MANIFEST EMBEBIDO (Data URI)
    ============================================================ */
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 const WHEEL_COLORS = ['#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#5E35B1','#D81B60','#F4511E','#7CB342','#3949AB','#8E24AA'];
 
 function makeIconSVG(){
@@ -228,6 +228,17 @@ function makeIconSVG(){
   .switch::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.25); transition:transform .2s; }
   #infToggle:checked + .switch, #pinToggle:checked + .switch{ background:var(--teal); }
   #infToggle:checked + .switch::after, #pinToggle:checked + .switch::after{ transform:translateX(22px); }
+  .seg-head, .seg-row{ display:grid; grid-template-columns:40px 1fr 64px 36px; gap:6px; align-items:center; }
+  .seg-head{ font-size:.72rem; font-weight:600; color:#3e6f82; margin-bottom:4px; }
+  .seg-head span:nth-child(3){ text-align:center; }
+  .seg-row input[type=color]{ width:40px; height:40px; padding:0; border:2px solid #bfe5d8; border-radius:10px; background:none; cursor:pointer; }
+  .seg-row input[type=color]::-webkit-color-swatch-wrapper{ padding:2px; }
+  .seg-row input[type=color]::-webkit-color-swatch{ border:none; border-radius:7px; }
+  .seg-row .field{ min-width:0; width:100%; box-sizing:border-box; padding:.5rem .6rem; font-size:.9rem; text-transform:uppercase; }
+  .seg-row .num{ text-align:center; padding:.5rem .2rem; text-transform:none; }
+  .seg-row.win .num{ border-color:var(--yellow); background:#fff8db; font-weight:600; }
+  .seg-del{ width:36px; height:40px; border:none; border-radius:10px; background:#fde4e4; color:var(--red); font-weight:600; }
+  .seg-del:disabled{ opacity:.35; }
   .brand .b-presta{ color:#ffffff; }
   .brand .b-ya{ color:#2bd96b; }
   #confetti{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; }
@@ -385,6 +396,22 @@ function makeIconSVG(){
       </div>
 
       <div class="card">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-lg">🎡 Segmentos de la ruleta</h3>
+          <span id="segCount" class="text-sm text-[#3e6f82]"></span>
+        </div>
+        <p class="text-xs text-[#3e6f82] mb-3">Escribe el texto de cada segmento y cuántas boletas da (0 = sin premio). Mínimo 4, máximo 16 segmentos.</p>
+        <div class="seg-head"><span></span><span>Texto</span><span>Boletas</span><span></span></div>
+        <div id="segList" class="flex flex-col gap-2"></div>
+        <button id="segAdd" class="btn btn-ghost mt-3">+ Agregar segmento</button>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <button id="segReset" class="btn btn-ghost">Restaurar originales</button>
+          <button id="segSave" class="btn btn-red">Guardar cambios</button>
+        </div>
+        <p id="segInfo" class="text-xs text-[#3e6f82] mt-3"></p>
+      </div>
+
+      <div class="card">
         <h3 class="font-bold text-lg mb-3">Ajustes</h3>
         <label class="flex items-center justify-between gap-3 mb-4 p-3 rounded-xl bg-[#dff3ec] cursor-pointer">
           <span>
@@ -437,22 +464,61 @@ const CONFIG = {
   WHATSAPP: '573162685282'   // número que recibe los resultados
 };
 
-const SEGMENTS = [
-  { text:'¡SUERTE EN LA PRÓXIMA!', prize:false },
-  { text:'1 BOLETA MÁS',           prize:true, boletas:1 },
-  { text:'SIGUE INTENTANDO',       prize:false, dark:true },
-  { text:'¡CASI LO LOGRAS!',       prize:false },
-  { text:'GRACIAS POR PARTICIPAR', prize:false },
-  { text:'2 BOLETAS',              prize:true, boletas:2 },
-  { text:'¡ÁNIMO, TÚ PUEDES!',     prize:false },
-  { text:'LA SUERTE TE ESPERA',    prize:false },
-  { text:'¡OTRA VEZ SERÁ!',        prize:false },
-  { text:'1 BOLETA MÁS',           prize:true, boletas:1 },
-  { text:'SIGUE PARTICIPANDO',     prize:false },
-  { text:'¡HOY NO, MAÑANA SÍ!',    prize:false }
-].map((s, i) => ({ ...s, n: i + 1, color: WHEEL_COLORS[i] }));
+// Ruleta original (se usa si no hay una personalizada)
+const DEFAULT_SEGMENTS = [
+  { text:'¡SUERTE EN LA PRÓXIMA!', boletas:0 },
+  { text:'1 BOLETA MÁS',           boletas:1 },
+  { text:'SIGUE INTENTANDO',       boletas:0 },
+  { text:'¡CASI LO LOGRAS!',       boletas:0 },
+  { text:'GRACIAS POR PARTICIPAR', boletas:0 },
+  { text:'2 BOLETAS',              boletas:2 },
+  { text:'¡ÁNIMO, TÚ PUEDES!',     boletas:0 },
+  { text:'LA SUERTE TE ESPERA',    boletas:0 },
+  { text:'¡OTRA VEZ SERÁ!',        boletas:0 },
+  { text:'1 BOLETA MÁS',           boletas:1 },
+  { text:'SIGUE PARTICIPANDO',     boletas:0 },
+  { text:'¡HOY NO, MAÑANA SÍ!',    boletas:0 }
+].map((s, i) => ({ ...s, color: WHEEL_COLORS[i] }));
 
-const SEG = 360 / SEGMENTS.length;
+const SEG_MIN = 4, SEG_MAX = 16, TEXT_MAX = 24, BOLETAS_MAX = 10;
+let SEGMENTS = [], SEG = 30;
+
+function luminance(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const ch = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+  return .2126 * ch(n >> 16) + .7152 * ch((n >> 8) & 255) + .0722 * ch(n & 255);
+}
+function cleanSegments(list){
+  if (!Array.isArray(list)) return null;
+  const out = list.slice(0, SEG_MAX).map((s, i) => ({
+    text: String(s.text || '').trim().toUpperCase().slice(0, TEXT_MAX),
+    boletas: Math.max(0, Math.min(BOLETAS_MAX, parseInt(s.boletas, 10) || 0)),
+    color: /^#[0-9a-f]{6}$/i.test(s.color || '') ? s.color.toUpperCase() : WHEEL_COLORS[i % WHEEL_COLORS.length]
+  })).filter(s => s.text);
+  return out.length >= SEG_MIN ? out : null;
+}
+function setSegments(list){
+  SEGMENTS = (cleanSegments(list) || DEFAULT_SEGMENTS).map((s, i) => ({
+    ...s, n: i + 1, prize: s.boletas > 0, dark: luminance(s.color) > 0.45
+  }));
+  SEG = 360 / SEGMENTS.length;
+}
+const sameAsDefault = list => JSON.stringify(cleanSegments(list)) === JSON.stringify(cleanSegments(DEFAULT_SEGMENTS));
+
+// Codificación compacta para llevar la ruleta dentro del enlace del cliente
+function encodeSegments(list){
+  const arr = cleanSegments(list).map(s => [s.text, s.boletas, s.color.slice(1)]);
+  const bytes = new TextEncoder().encode(JSON.stringify(arr));
+  let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeSegments(str){
+  try {
+    const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+    const arr = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+    return cleanSegments(arr.map(a => ({ text: a[0], boletas: a[1], color: '#' + a[2] })));
+  } catch { return null; }
+}
 
 /* ============================================================
    UTILIDADES
@@ -514,13 +580,18 @@ const P = {
   cliente: (qs.get('cliente') || '').trim(),
   id: (qs.get('id') || '').trim(),
   wa: (qs.get('wa') || '').trim(),
-  t: (qs.get('t') || '').trim()
+  t: (qs.get('t') || '').trim(),
+  r: (qs.get('r') || '').trim()
 };
 let MODE = 'demo'; // demo | client | invalid
 if (P.cliente || P.id) {
   if (!P.id) P.id = P.cliente;
-  MODE = linkToken(P.cliente, P.id, P.wa) === P.t ? 'client' : 'invalid';
+  MODE = linkToken(P.cliente, P.id, P.wa + (P.r ? '|' + P.r : '')) === P.t ? 'client' : 'invalid';
 }
+// Qué ruleta se muestra: la del enlace del cliente, o la guardada por el administrador en este dispositivo
+if (MODE === 'client') setSegments(P.r ? decodeSegments(P.r) : null);
+else if (MODE === 'demo') setSegments(store.get('rp_segments', null));
+else setSegments(null);
 
 /* ---------- Giros y premios acumulados ---------- */
 let demoSpins = [];   // la vista sin enlace (prueba) no guarda nada: al recargar vuelve a 2 giros
@@ -683,7 +754,7 @@ function drawWheel(){
   SEGMENTS.forEach((s, i) => {
     const mid = (i + 0.5) * SEG * Math.PI / 180;
     c.save(); c.translate(C, C); c.rotate(mid + Math.PI); // +x apunta hacia el centro
-    const fill = s.dark ? '#3a2600' : (s.prize ? '#fff59d' : '#ffffff');
+    const fill = s.dark ? (s.prize ? '#7a1010' : '#2a2200') : (s.prize ? '#fff59d' : '#ffffff');
     const stroke = s.dark ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.4)';
     c.textBaseline = 'middle'; c.lineJoin = 'round';
 
@@ -695,6 +766,12 @@ function drawWheel(){
     c.font = `700 ${fs}px ${FONT}`;
     const widest = Math.max(...lines.map(l => c.measureText(l).width));
     if (widest > maxW) { fs *= maxW / widest; c.font = `700 ${fs}px ${FONT}`; }
+    // Que el texto quepa a lo ancho del segmento (importa cuando hay muchos segmentos)
+    const w = Math.max(...lines.map(l => c.measureText(l).width));
+    const rq = Math.max(r * 0.3, r * 0.92 - w * 0.8);
+    const allowed = 2 * rq * Math.tan(SEG * Math.PI / 360) * 0.92;
+    const blockH = lines.length * fs * 1.04;
+    if (blockH > allowed) { fs *= allowed / blockH; c.font = `700 ${fs}px ${FONT}`; }
     c.textAlign = 'left';
     lines.forEach((l, k) => {
       const y = (k - (lines.length - 1) / 2) * fs * 1.02;
@@ -920,7 +997,7 @@ function showAdmin(ok){
   $('adminView').classList.toggle('hidden', !ok);
   if (ok) {
     if (!$('gId').value) $('gId').value = newId();
-    renderHistory();
+    renderHistory(); loadSegDraft();
   } else setTimeout(() => $('pinInput').focus(), 300);
 }
 $('btnAdmin').onclick = openAdmin;
@@ -941,7 +1018,10 @@ function buildLink(cliente, id, wa){
   const u = new URLSearchParams();
   u.set('cliente', cliente); u.set('id', id);
   if (wa) u.set('wa', wa);
-  u.set('t', linkToken(cliente, id, wa));
+  const saved = store.get('rp_segments', null);
+  const r = saved && cleanSegments(saved) && !sameAsDefault(saved) ? encodeSegments(saved) : '';
+  if (r) u.set('r', r);
+  u.set('t', linkToken(cliente, id, wa + (r ? '|' + r : '')));
   return baseURL() + '?' + u.toString();
 }
 const inviteText = (cliente, link) => `¡Hola ${cliente.split(' ')[0]}! 🎡 PrestaYa te regala 2 giros en la ruleta para ganar boletas extra. Entra aquí (enlace personal):\n${link}`;
@@ -998,7 +1078,7 @@ $('vCheck').onclick = () => {
   const out = $('vResult');
   if (!id || !code) { out.textContent = 'Completa ID y código'; out.style.color = '#dc2e2f'; return; }
   let hit = 0;
-  for (let n = 1; n <= CONFIG.MAX_SPINS * 2; n++) if (prizeCode(id, 'TOTAL' + n) === code) hit = n;
+  for (let n = 1; n <= CONFIG.MAX_SPINS * BOLETAS_MAX; n++) if (prizeCode(id, 'TOTAL' + n) === code) hit = n;
   if (hit) { out.textContent = `✅ Código válido: ${boletasTxt(hit)} acumuladas`; out.style.color = '#079fa0'; }
   else { out.textContent = '❌ El código no corresponde a ningún premio de ese ID'; out.style.color = '#dc2e2f'; }
 };
@@ -1008,6 +1088,55 @@ $('savePin').onclick = () => {
   if (!/^\d{4,8}$/.test(p)) return toast('El PIN debe tener de 4 a 8 dígitos');
   store.set('rp_pin', p); $('newPin').value = ''; toast('PIN actualizado');
 };
+/* ---------- Editor de segmentos ---------- */
+let segDraft = [];
+function loadSegDraft(){ segDraft = SEGMENTS.map(s => ({ text: s.text, boletas: s.boletas, color: s.color })); renderSegEditor(); }
+function renderSegEditor(){
+  const list = $('segList'); list.innerHTML = '';
+  segDraft.forEach((s, i) => {
+    const row = document.createElement('div'); row.className = 'seg-row' + (s.boletas > 0 ? ' win' : '');
+    const col = document.createElement('input'); col.type = 'color'; col.value = s.color; col.title = 'Color';
+    col.oninput = e => { s.color = e.target.value; };
+    const txt = document.createElement('input'); txt.className = 'field'; txt.maxLength = TEXT_MAX; txt.value = s.text; txt.placeholder = 'Texto del segmento';
+    txt.oninput = e => { s.text = e.target.value; };
+    const num = document.createElement('input'); num.className = 'field num'; num.type = 'number'; num.min = 0; num.max = BOLETAS_MAX; num.inputMode = 'numeric'; num.value = s.boletas;
+    num.oninput = e => { s.boletas = Math.max(0, Math.min(BOLETAS_MAX, parseInt(e.target.value, 10) || 0)); row.classList.toggle('win', s.boletas > 0); };
+    const del = document.createElement('button'); del.className = 'seg-del'; del.textContent = '✕'; del.title = 'Quitar segmento';
+    del.disabled = segDraft.length <= SEG_MIN;
+    del.onclick = () => { segDraft.splice(i, 1); renderSegEditor(); };
+    row.append(col, txt, num, del); list.append(row);
+  });
+  const premios = segDraft.filter(s => s.boletas > 0).length;
+  $('segCount').textContent = `${segDraft.length} segmentos · ${premios} con premio`;
+  $('segAdd').disabled = segDraft.length >= SEG_MAX;
+  const custom = store.get('rp_segments', null);
+  $('segInfo').textContent = custom && !sameAsDefault(custom)
+    ? 'Usando una ruleta personalizada. Los enlaces que generes desde ahora llevan esta ruleta; los que ya enviaste conservan la que tenían.'
+    : 'Usando la ruleta original.';
+}
+$('segAdd').onclick = () => {
+  if (segDraft.length >= SEG_MAX) return;
+  segDraft.push({ text: 'NUEVO PREMIO', boletas: 0, color: WHEEL_COLORS[segDraft.length % WHEEL_COLORS.length] });
+  renderSegEditor();
+  const inputs = $('segList').querySelectorAll('.seg-row .field:not(.num)'); const last = inputs[inputs.length - 1];
+  if (last) { last.focus(); last.select(); }
+};
+$('segReset').onclick = () => {
+  if (!confirm('¿Volver a la ruleta original de 12 segmentos?')) return;
+  store.del('rp_segments'); setSegments(null); demoSpins = []; drawWheel(); renderStatus(); loadSegDraft();
+  toast('Ruleta original restaurada');
+};
+$('segSave').onclick = () => {
+  const empty = segDraft.findIndex(s => !String(s.text).trim());
+  if (empty >= 0) return toast(`El segmento ${empty + 1} no tiene texto`);
+  const clean = cleanSegments(segDraft);
+  if (!clean) return toast(`La ruleta necesita mínimo ${SEG_MIN} segmentos`);
+  if (!clean.some(s => s.boletas > 0) && !confirm('Ningún segmento da boletas. ¿Guardar de todas formas?')) return;
+  if (sameAsDefault(clean)) store.del('rp_segments'); else store.set('rp_segments', clean);
+  setSegments(clean); demoSpins = []; drawWheel(); renderStatus(); loadSegDraft();
+  toast('Ruleta actualizada');
+};
+
 $('pinToggle').checked = pinEnabled();
 $('pinToggle').onchange = e => {
   store.set('rp_pin_on', e.target.checked);
